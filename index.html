@@ -3,47 +3,55 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>極簡計分器 Pro - 點擊清空版</title>
+    <title>極簡計分器 - 數據分析版</title>
     <style>
-        :root { --win-bg: #4caf50; --win-text: #ffffff; --lose-text: #d32f2f; --primary: #1976d2; }
-        body { font-family: "PingFang TC", "Microsoft JhengHei", sans-serif; background-color: #f5f5f5; padding: 15px; margin: 0; }
-        .container { max-width: 480px; margin: auto; background: white; padding: 20px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); position: relative; }
+        :root { --win-bg: #4caf50; --win-text: #ffffff; --lose-text: #d32f2f; --primary: #1976d2; --gold: #ffd700; }
+        body { font-family: "PingFang TC", "Microsoft JhengHei", sans-serif; background-color: #f0f2f5; padding: 15px; margin: 0; }
+        .container { max-width: 500px; margin: auto; background: white; padding: 20px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); position: relative; }
         
-        /* 設定按鈕與選單 */
         .settings-btn { position: absolute; top: 15px; right: 15px; font-size: 24px; cursor: pointer; background: none; border: none; padding: 5px; z-index: 10; }
         .menu-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); z-index: 100; }
         .menu-content { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; border-radius: 12px; width: 250px; text-align: center; }
         
-        /* 按鈕樣式 */
         button.action-btn { width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 1px solid #ddd; font-weight: bold; cursor: pointer; font-size: 16px; }
         .btn-blue { background: var(--primary); color: white; border: none; }
         .btn-danger { background: #fff5f5; color: #d32f2f; border-color: #ffcdd2; }
         .btn-green { background: #2e7d32; color: white; border: none; }
 
-        /* 設定區 - 點擊清空樣式 */
         .setup-box input { width: 100%; box-sizing: border-box; padding: 12px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; background: #fafafa; }
-        .setup-box input:focus { background: #fff; border-color: var(--primary); outline: none; }
 
-        /* 玩家卡片 */
+        /* 玩家卡片與最高分高亮 */
         .score-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 20px 0; }
-        .player-card { background: #fff; border: 2px solid #eee; padding: 15px; border-radius: 12px; text-align: center; cursor: pointer; transition: 0.2s; }
-        .player-card.active { border-color: #43a047; background: #e8f5e9; transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        .player-card { background: #fff; border: 2px solid #eee; padding: 15px; border-radius: 12px; text-align: center; cursor: pointer; position: relative; transition: 0.3s; }
+        .player-card.active { border-color: #43a047; background: #e8f5e9; }
+        .player-card.is-highest { border-color: var(--gold); background: #fffef0; box-shadow: 0 0 10px rgba(255, 215, 0, 0.3); }
+        .highest-badge { position: absolute; top: -10px; left: 50%; transform: translateX(-50%); background: var(--gold); color: #000; font-size: 12px; padding: 2px 8px; border-radius: 10px; font-weight: bold; display: none; }
+        .player-card.is-highest .highest-badge { display: block; }
         .total-val { font-size: 2em; font-weight: bold; margin-top: 5px; }
 
         /* 輸入區 */
         .input-box { background: #fafafa; border: 1px solid #eee; padding: 15px; border-radius: 12px; margin-bottom: 20px; }
         .row { display: flex; align-items: center; margin-bottom: 12px; }
-        .row label { flex: 1; font-weight: bold; font-size: 1.1em; }
+        .row label { flex: 1; font-weight: bold; }
         .row .input-wrap { flex: 1.5; position: relative; }
         .row .input-wrap::before { content: "-"; position: absolute; left: 10px; top: 9px; font-weight: bold; color: var(--lose-text); }
         .row input { width: 100%; padding: 10px 10px 10px 25px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 8px; font-size: 1.2em; color: var(--lose-text); }
 
-        /* 表格紀錄樣式 */
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; background: white; }
-        th, td { border: 1px solid #f0f0f0; padding: 12px 8px; text-align: center; }
-        th { background: #fcfcfc; color: #777; font-size: 0.85em; }
-        .win-cell { background-color: var(--win-bg) !important; color: var(--win-text) !important; font-weight: bold; font-size: 1.1em; }
-        .lose-cell { color: var(--lose-text); }
+        /* 表格紀錄 */
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; background: white; font-size: 14px; }
+        th, td { border: 1px solid #f0f0f0; padding: 12px 6px; text-align: center; }
+        th { background: #fcfcfc; color: #777; }
+        .win-cell { background-color: var(--win-bg) !important; color: var(--win-text) !important; font-weight: bold; }
+        
+        /* 統計數據區 */
+        .stats-section { margin-top: 30px; border-top: 2px solid #eee; padding-top: 20px; }
+        .global-stats { display: flex; justify-content: space-around; margin-bottom: 20px; background: #333; color: white; padding: 15px; border-radius: 10px; }
+        .stat-item { text-align: center; }
+        .stat-label { font-size: 12px; opacity: 0.8; }
+        .stat-val { font-size: 18px; font-weight: bold; }
+        .player-stats-table { width: 100%; background: #fdfdfd; }
+        .player-stats-table th { background: #eee; font-size: 12px; }
+
         .hidden { display: none; }
     </style>
 </head>
@@ -51,16 +59,14 @@
 
 <div class="container">
     <button class="settings-btn" id="gearBtn" onclick="toggleMenu()" style="display:none;">⚙️</button>
-    <h2 style="text-align:center; margin-top: 0;">計分助手 Pro</h2>
+    <h2 style="text-align:center; margin-top: 0;">計分助手 Pro+</h2>
 
     <div id="setupUI">
         <div class="setup-box">
-            <p style="font-size: 14px; color: #888; margin-bottom: 10px;">點擊框框即可輸入人名：</p>
             <input type="text" id="n0" value="玩家1" onclick="if(this.value.includes('玩家'))this.value=''">
             <input type="text" id="n1" value="玩家2" onclick="if(this.value.includes('玩家'))this.value=''">
             <input type="text" id="n2" value="玩家3" onclick="if(this.value.includes('玩家'))this.value=''">
             <input type="text" id="n3" value="玩家4" onclick="if(this.value.includes('玩家'))this.value=''">
-            <hr style="border:0; border-top:1px solid #eee; margin: 15px 0;">
             <label style="font-size:14px; color:#666;">起始總分：</label>
             <input type="number" id="sScore" value="0">
             <button class="action-btn btn-blue" onclick="initGame()">開始新比賽</button>
@@ -69,10 +75,18 @@
 
     <div id="gameUI" class="hidden">
         <div class="score-grid">
-            <div class="player-card" id="card0" onclick="pickWinner(0)"><b id="ln0"></b><div class="total-val" id="tv0">0</div></div>
-            <div class="player-card" id="card1" onclick="pickWinner(1)"><b id="ln1"></b><div class="total-val" id="tv1">0</div></div>
-            <div class="player-card" id="card2" onclick="pickWinner(2)"><b id="ln2"></b><div class="total-val" id="tv2">0</div></div>
-            <div class="player-card" id="card3" onclick="pickWinner(3)"><b id="ln3"></b><div class="total-val" id="tv3">0</div></div>
+            <div class="player-card" id="card0" onclick="pickWinner(0)">
+                <div class="highest-badge">領先</div><b id="ln0"></b><div class="total-val" id="tv0">0</div>
+            </div>
+            <div class="player-card" id="card1" onclick="pickWinner(1)">
+                <div class="highest-badge">領先</div><b id="ln1"></b><div class="total-val" id="tv1">0</div>
+            </div>
+            <div class="player-card" id="card2" onclick="pickWinner(2)">
+                <div class="highest-badge">領先</div><b id="ln2"></b><div class="total-val" id="tv2">0</div>
+            </div>
+            <div class="player-card" id="card3" onclick="pickWinner(3)">
+                <div class="highest-badge">領先</div><b id="ln3"></b><div class="total-val" id="tv3">0</div>
+            </div>
         </div>
 
         <div id="inputUI" class="input-box hidden">
@@ -81,8 +95,8 @@
             <button class="action-btn btn-green" onclick="submit()">結算本局</button>
         </div>
 
-        <div style="margin-top: 20px;">
-            <h3 style="border-bottom: 2px solid #eee; padding-bottom: 5px;">歷史紀錄</h3>
+        <div>
+            <h3>歷史紀錄</h3>
             <div style="overflow-x: auto;">
                 <table id="logTable">
                     <thead><tr id="tHead"><th>局</th></tr></thead>
@@ -90,13 +104,30 @@
                 </table>
             </div>
         </div>
+
+        <div class="stats-section">
+            <h3>全場數據統計</h3>
+            <div class="global-stats">
+                <div class="stat-item"><div class="stat-label">全場最高</div><div class="stat-val" id="gHigh">-</div></div>
+                <div class="stat-item"><div class="stat-label">全場最低</div><div class="stat-val" id="gLow">-</div></div>
+            </div>
+            <h3>個人數據分析</h3>
+            <div style="overflow-x: auto;">
+                <table class="player-stats-table">
+                    <thead>
+                        <tr><th>玩家</th><th>最高</th><th>最低</th><th>平均</th></tr>
+                    </thead>
+                    <tbody id="pStatsBody"></tbody>
+                </table>
+            </div>
+        </div>
     </div>
 
     <div id="menuOverlay" class="menu-overlay" onclick="toggleMenu()">
         <div class="menu-content" onclick="event.stopPropagation()">
-            <h3 style="margin-top:0;">設定選項</h3>
+            <h3>設定選項</h3>
             <button class="action-btn" onclick="undo()">⬅ 復原上一局</button>
-            <button class="action-btn btn-danger" onclick="resetAll()">🔄 開新局 (清空紀錄)</button>
+            <button class="action-btn btn-danger" onclick="resetAll()">🔄 開新局</button>
             <button class="action-btn" onclick="toggleMenu()">關閉選單</button>
         </div>
     </div>
@@ -106,7 +137,7 @@
     let state = { players: [], totals: [0,0,0,0], history: [] };
 
     window.onload = () => {
-        const saved = localStorage.getItem('score_data_v3');
+        const saved = localStorage.getItem('score_data_v4');
         if (saved) {
             state = JSON.parse(saved);
             renderUI();
@@ -116,34 +147,34 @@
         }
     };
 
-    function save() { localStorage.setItem('score_data_v3', JSON.stringify(state)); }
+    function save() { localStorage.setItem('score_data_v4', JSON.stringify(state)); }
 
     function initGame() {
-        state.players = [
-            document.getElementById('n0').value || "玩家1", 
-            document.getElementById('n1').value || "玩家2", 
-            document.getElementById('n2').value || "玩家3", 
-            document.getElementById('n3').value || "玩家4"
-        ];
+        state.players = [document.getElementById('n0').value || "玩家1", document.getElementById('n1').value || "玩家2", document.getElementById('n2').value || "玩家3", document.getElementById('n3').value || "玩家4"];
         let s = parseInt(document.getElementById('sScore').value) || 0;
         state.totals = [s, s, s, s];
         state.history = [];
-        
         document.getElementById('setupUI').classList.add('hidden');
         document.getElementById('gameUI').classList.remove('hidden');
         document.getElementById('gearBtn').style.display = 'block';
-        renderUI();
-        save();
+        renderUI(); save();
     }
 
     function renderUI() {
-        const head = document.getElementById('tHead');
-        head.innerHTML = '<th>局</th>';
+        // 更新分數與最高分高亮
+        const maxVal = Math.max(...state.totals);
         state.players.forEach((p, i) => {
             document.getElementById(`ln${i}`).innerText = p;
             document.getElementById(`tv${i}`).innerText = state.totals[i];
-            let th = document.createElement('th'); th.innerText = p; head.appendChild(th);
+            const card = document.getElementById(`card${i}`);
+            // 只有在有人領先且不是平局起步時高亮
+            card.classList.toggle('is-highest', state.totals[i] === maxVal && state.history.length > 0);
         });
+
+        // 歷史表格
+        const head = document.getElementById('tHead');
+        head.innerHTML = '<th>局</th>';
+        state.players.forEach(p => { let th = document.createElement('th'); th.innerText = p; head.appendChild(th); });
 
         const tbody = document.querySelector("#logTable tbody");
         tbody.innerHTML = "";
@@ -156,13 +187,41 @@
             });
             tbody.appendChild(tr);
         });
+
+        calculateStats();
+    }
+
+    function calculateStats() {
+        if (state.history.length === 0) return;
+
+        // 全場最高最低
+        document.getElementById('gHigh').innerText = Math.max(...state.totals);
+        document.getElementById('gLow').innerText = Math.min(...state.totals);
+
+        // 個人統計
+        const statsBody = document.getElementById('pStatsBody');
+        statsBody.innerHTML = "";
+        
+        for (let i = 0; i < 4; i++) {
+            let pChanges = state.history.map(h => h.changes[i]);
+            let pMax = Math.max(...pChanges);
+            let pMin = Math.min(...pChanges);
+            let pAvg = (pChanges.reduce((a, b) => a + b, 0) / state.history.length).toFixed(1);
+            
+            statsBody.innerHTML += `<tr>
+                <td><b>${state.players[i]}</b></td>
+                <td style="color:green">+${pMax}</td>
+                <td style="color:red">${pMin}</td>
+                <td>${pAvg}</td>
+            </tr>`;
+        }
     }
 
     let curWinIdx = -1;
     function pickWinner(idx) {
         curWinIdx = idx;
         for(let i=0; i<4; i++) document.getElementById(`card${i}`).classList.toggle('active', i===idx);
-        document.getElementById('winName').innerText = `🏆 贏家是：${state.players[idx]}`;
+        document.getElementById('winName').innerText = `🏆 贏家：${state.players[idx]}`;
         const container = document.getElementById('loserInputs');
         container.innerHTML = "";
         state.players.forEach((p, i) => {
@@ -204,8 +263,8 @@
     }
 
     function resetAll() {
-        if (confirm("確定開新局？所有紀錄將清除！")) {
-            localStorage.removeItem('score_data_v3');
+        if (confirm("確定開新局？紀錄將永久清除！")) {
+            localStorage.removeItem('score_data_v4');
             location.reload();
         }
     }
