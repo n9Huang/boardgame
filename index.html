@@ -3,55 +3,59 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>極簡計分器 - 數據分析版</title>
+    <title>極簡計分器 - 終極穩定版</title>
     <style>
         :root { --win-bg: #4caf50; --win-text: #ffffff; --lose-text: #d32f2f; --primary: #1976d2; --gold: #ffd700; }
-        body { font-family: "PingFang TC", "Microsoft JhengHei", sans-serif; background-color: #f0f2f5; padding: 15px; margin: 0; }
-        .container { max-width: 500px; margin: auto; background: white; padding: 20px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); position: relative; }
+        * { box-sizing: border-box; } /* 確保所有寬度計算包含邊框與內距 */
+        body { font-family: "PingFang TC", "Microsoft JhengHei", sans-serif; background-color: #f0f2f5; padding: 10px; margin: 0; }
+        .container { max-width: 500px; margin: auto; background: white; padding: 20px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); position: relative; }
         
-        .settings-btn { position: absolute; top: 15px; right: 15px; font-size: 24px; cursor: pointer; background: none; border: none; padding: 5px; z-index: 10; }
-        .menu-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); z-index: 100; }
-        .menu-content { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; border-radius: 12px; width: 250px; text-align: center; }
+        /* 設定按鈕 */
+        .settings-btn { position: absolute; top: 15px; right: 15px; font-size: 24px; cursor: pointer; background: none; border: none; z-index: 10; }
+        .menu-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 100; }
+        .menu-content { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; border-radius: 12px; width: 280px; text-align: center; }
         
-        button.action-btn { width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 1px solid #ddd; font-weight: bold; cursor: pointer; font-size: 16px; }
+        button.action-btn { width: 100%; padding: 12px; margin: 8px 0; border-radius: 8px; border: 1px solid #ddd; font-weight: bold; cursor: pointer; }
         .btn-blue { background: var(--primary); color: white; border: none; }
         .btn-danger { background: #fff5f5; color: #d32f2f; border-color: #ffcdd2; }
         .btn-green { background: #2e7d32; color: white; border: none; }
 
-        .setup-box input { width: 100%; box-sizing: border-box; padding: 12px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; background: #fafafa; }
+        .setup-box input { width: 100%; padding: 12px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; }
 
-        /* 玩家卡片與最高分高亮 */
-        .score-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 20px 0; }
-        .player-card { background: #fff; border: 2px solid #eee; padding: 15px; border-radius: 12px; text-align: center; cursor: pointer; position: relative; transition: 0.3s; }
+        .score-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 20px 0; }
+        .player-card { background: #fff; border: 2px solid #eee; padding: 15px 5px; border-radius: 12px; text-align: center; position: relative; cursor: pointer; }
         .player-card.active { border-color: #43a047; background: #e8f5e9; }
-        .player-card.is-highest { border-color: var(--gold); background: #fffef0; box-shadow: 0 0 10px rgba(255, 215, 0, 0.3); }
-        .highest-badge { position: absolute; top: -10px; left: 50%; transform: translateX(-50%); background: var(--gold); color: #000; font-size: 12px; padding: 2px 8px; border-radius: 10px; font-weight: bold; display: none; }
+        .player-card.is-highest { border-color: var(--gold); background: #fffef0; box-shadow: 0 0 8px rgba(255, 215, 0, 0.4); }
+        .highest-badge { position: absolute; top: -10px; left: 50%; transform: translateX(-50%); background: var(--gold); color: #000; font-size: 10px; padding: 2px 6px; border-radius: 10px; font-weight: bold; display: none; }
         .player-card.is-highest .highest-badge { display: block; }
-        .total-val { font-size: 2em; font-weight: bold; margin-top: 5px; }
+        .streak-fire { font-size: 12px; color: #ff4d4f; height: 18px; }
+        .total-val { font-size: 1.8em; font-weight: bold; }
 
-        /* 輸入區 */
-        .input-box { background: #fafafa; border: 1px solid #eee; padding: 15px; border-radius: 12px; margin-bottom: 20px; }
-        .row { display: flex; align-items: center; margin-bottom: 12px; }
+        .input-box { background: #f9f9f9; border: 1px solid #eee; padding: 15px; border-radius: 12px; margin-bottom: 20px; }
+        .row { display: flex; align-items: center; margin-bottom: 10px; }
         .row label { flex: 1; font-weight: bold; }
         .row .input-wrap { flex: 1.5; position: relative; }
-        .row .input-wrap::before { content: "-"; position: absolute; left: 10px; top: 9px; font-weight: bold; color: var(--lose-text); }
-        .row input { width: 100%; padding: 10px 10px 10px 25px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 8px; font-size: 1.2em; color: var(--lose-text); }
+        .row .input-wrap::before { content: "-"; position: absolute; left: 8px; top: 8px; font-weight: bold; color: var(--lose-text); }
+        .row input { width: 100%; padding: 8px 8px 8px 20px; border: 1px solid #ccc; border-radius: 6px; font-size: 1.1em; color: var(--lose-text); }
 
-        /* 表格紀錄 */
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; background: white; font-size: 14px; }
-        th, td { border: 1px solid #f0f0f0; padding: 12px 6px; text-align: center; }
-        th { background: #fcfcfc; color: #777; }
-        .win-cell { background-color: var(--win-bg) !important; color: var(--win-text) !important; font-weight: bold; }
+        .section-title { border-left: 4px solid var(--primary); padding-left: 10px; margin: 25px 0 10px 0; font-weight: bold; }
         
-        /* 統計數據區 */
-        .stats-section { margin-top: 30px; border-top: 2px solid #eee; padding-top: 20px; }
-        .global-stats { display: flex; justify-content: space-around; margin-bottom: 20px; background: #333; color: white; padding: 15px; border-radius: 10px; }
-        .stat-item { text-align: center; }
-        .stat-label { font-size: 12px; opacity: 0.8; }
-        .stat-val { font-size: 18px; font-weight: bold; }
-        .player-stats-table { width: 100%; background: #fdfdfd; }
-        .player-stats-table th { background: #eee; font-size: 12px; }
+        /* 表格與容器 */
+        .table-wrapper { overflow-x: auto; margin-bottom: 15px; width: 100%; }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; background: white; min-width: 350px; }
+        th, td { border: 1px solid #f0f0f0; padding: 10px 4px; text-align: center; }
+        th { background: #fafafa; color: #777; }
+        .win-cell { background-color: var(--win-bg) !important; color: white !important; font-weight: bold; }
 
+        .global-stats { display: flex; gap: 10px; margin-bottom: 15px; }
+        .stat-card { flex: 1; background: #2c3e50; color: white; padding: 10px; border-radius: 8px; text-align: center; }
+        .stat-card .label { font-size: 11px; opacity: 0.8; }
+        .stat-card .val { font-size: 14px; font-weight: bold; margin: 3px 0; }
+        .stat-card .name { font-size: 12px; color: var(--gold); }
+
+        /* 圖表修正：加入 overflow hidden 與固定寬度邏輯 */
+        .chart-container { width: 100%; height: 160px; background: #fff; border-radius: 8px; border: 1px solid #eee; overflow: hidden; position: relative; }
+        canvas { width: 100% !important; height: 100% !important; display: block; }
         .hidden { display: none; }
     </style>
 </head>
@@ -59,7 +63,7 @@
 
 <div class="container">
     <button class="settings-btn" id="gearBtn" onclick="toggleMenu()" style="display:none;">⚙️</button>
-    <h2 style="text-align:center; margin-top: 0;">計分助手 Pro+</h2>
+    <h2 style="text-align:center; margin-top: 0;">🧮 終極計分 Pro</h2>
 
     <div id="setupUI">
         <div class="setup-box">
@@ -67,77 +71,80 @@
             <input type="text" id="n1" value="玩家2" onclick="if(this.value.includes('玩家'))this.value=''">
             <input type="text" id="n2" value="玩家3" onclick="if(this.value.includes('玩家'))this.value=''">
             <input type="text" id="n3" value="玩家4" onclick="if(this.value.includes('玩家'))this.value=''">
-            <label style="font-size:14px; color:#666;">起始總分：</label>
+            <label style="font-size:14px; color:#666;">起始分數：</label>
             <input type="number" id="sScore" value="0">
-            <button class="action-btn btn-blue" onclick="initGame()">開始新比賽</button>
+            <button class="action-btn btn-blue" onclick="initGame()">開始比賽</button>
         </div>
     </div>
 
     <div id="gameUI" class="hidden">
         <div class="score-grid">
-            <div class="player-card" id="card0" onclick="pickWinner(0)">
-                <div class="highest-badge">領先</div><b id="ln0"></b><div class="total-val" id="tv0">0</div>
-            </div>
-            <div class="player-card" id="card1" onclick="pickWinner(1)">
-                <div class="highest-badge">領先</div><b id="ln1"></b><div class="total-val" id="tv1">0</div>
-            </div>
-            <div class="player-card" id="card2" onclick="pickWinner(2)">
-                <div class="highest-badge">領先</div><b id="ln2"></b><div class="total-val" id="tv2">0</div>
-            </div>
-            <div class="player-card" id="card3" onclick="pickWinner(3)">
-                <div class="highest-badge">領先</div><b id="ln3"></b><div class="total-val" id="tv3">0</div>
-            </div>
+            <div class="player-card" id="card0" onclick="pickWinner(0)"><div class="highest-badge">👑 領先</div><div id="ln0"></div><div id="streak0" class="streak-fire"></div><div class="total-val" id="tv0">0</div></div>
+            <div class="player-card" id="card1" onclick="pickWinner(1)"><div class="highest-badge">👑 領先</div><div id="ln1"></div><div id="streak1" class="streak-fire"></div><div class="total-val" id="tv1">0</div></div>
+            <div class="player-card" id="card2" onclick="pickWinner(2)"><div class="highest-badge">👑 領先</div><div id="ln2"></div><div id="streak2" class="streak-fire"></div><div class="total-val" id="tv2">0</div></div>
+            <div class="player-card" id="card3" onclick="pickWinner(3)"><div class="highest-badge">👑 領先</div><div id="ln3"></div><div id="streak3" class="streak-fire"></div><div class="total-val" id="tv3">0</div></div>
         </div>
 
         <div id="inputUI" class="input-box hidden">
-            <h4 id="winName" style="margin:0 0 15px 0; color:#2e7d32; text-align:center;"></h4>
+            <h4 id="winName" style="margin:0 0 10px 0; color:#2e7d32; text-align:center;"></h4>
             <div id="loserInputs"></div>
             <button class="action-btn btn-green" onclick="submit()">結算本局</button>
         </div>
 
-        <div>
-            <h3>歷史紀錄</h3>
-            <div style="overflow-x: auto;">
-                <table id="logTable">
-                    <thead><tr id="tHead"><th>局</th></tr></thead>
-                    <tbody></tbody>
-                </table>
+        <div class="section-title">📜 歷史紀錄</div>
+        <div class="table-wrapper">
+            <table id="logTable">
+                <thead><tr id="tHead"><th>局</th></tr></thead>
+                <tbody></tbody>
+            </table>
+        </div>
+
+        <div class="section-title">🏆 全場單局之最</div>
+        <div class="global-stats">
+            <div class="stat-card">
+                <div class="label">最高贏分</div><div class="val" id="gHighVal">+0</div><div class="name" id="gHighName">-</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">最大扣分</div><div class="val" id="gLowVal" style="color:#ff5252;">0</div><div class="name" id="gLowName">-</div>
             </div>
         </div>
 
-        <div class="stats-section">
-            <h3>全場數據統計</h3>
-            <div class="global-stats">
-                <div class="stat-item"><div class="stat-label">全場最高</div><div class="stat-val" id="gHigh">-</div></div>
-                <div class="stat-item"><div class="stat-label">全場最低</div><div class="stat-val" id="gLow">-</div></div>
-            </div>
-            <h3>個人數據分析</h3>
-            <div style="overflow-x: auto;">
-                <table class="player-stats-table">
-                    <thead>
-                        <tr><th>玩家</th><th>最高</th><th>最低</th><th>平均</th></tr>
-                    </thead>
-                    <tbody id="pStatsBody"></tbody>
-                </table>
-            </div>
+        <div class="section-title">📊 個人數據分析</div>
+        <div class="table-wrapper">
+            <table>
+                <thead><tr><th>玩家</th><th>勝率(贏局)</th><th>最高</th><th>最低</th><th>平均</th></tr></thead>
+                <tbody id="statsBody"></tbody>
+            </table>
+        </div>
+
+        <div class="section-title">📈 分數走勢</div>
+        <div class="chart-container"><canvas id="scoreChart"></canvas></div>
+
+        <div class="section-title">💸 提款機分析</div>
+        <div class="table-wrapper">
+            <table>
+                <thead><tr><th>贏家</th><th>主要貢獻者</th><th>貢獻總額</th></tr></thead>
+                <tbody id="bankBody"></tbody>
+            </table>
         </div>
     </div>
 
     <div id="menuOverlay" class="menu-overlay" onclick="toggleMenu()">
         <div class="menu-content" onclick="event.stopPropagation()">
-            <h3>設定選項</h3>
+            <h3>設定選單</h3>
             <button class="action-btn" onclick="undo()">⬅ 復原上一局</button>
-            <button class="action-btn btn-danger" onclick="resetAll()">🔄 開新局</button>
-            <button class="action-btn" onclick="toggleMenu()">關閉選單</button>
+            <button class="action-btn btn-danger" onclick="resetAll()">🔄 重新開局</button>
+            <button class="action-btn" onclick="toggleMenu()">返回</button>
         </div>
     </div>
 </div>
 
 <script>
-    let state = { players: [], totals: [0,0,0,0], history: [] };
+    let state = { players: [], totals: [0,0,0,0], history: [], startScore: 0 };
+    const COLORS = ['#1976d2', '#d32f2f', '#2e7d32', '#ed6c02'];
 
     window.onload = () => {
-        const saved = localStorage.getItem('score_data_v4');
+        const saved = localStorage.getItem('score_data_v8');
         if (saved) {
             state = JSON.parse(saved);
             renderUI();
@@ -147,12 +154,12 @@
         }
     };
 
-    function save() { localStorage.setItem('score_data_v4', JSON.stringify(state)); }
+    function save() { localStorage.setItem('score_data_v8', JSON.stringify(state)); }
 
     function initGame() {
-        state.players = [document.getElementById('n0').value || "玩家1", document.getElementById('n1').value || "玩家2", document.getElementById('n2').value || "玩家3", document.getElementById('n3').value || "玩家4"];
-        let s = parseInt(document.getElementById('sScore').value) || 0;
-        state.totals = [s, s, s, s];
+        state.players = [document.getElementById('n0').value || "P1", document.getElementById('n1').value || "P2", document.getElementById('n2').value || "P3", document.getElementById('n3').value || "P4"];
+        state.startScore = parseInt(document.getElementById('sScore').value) || 0;
+        state.totals = [state.startScore, state.startScore, state.startScore, state.startScore];
         state.history = [];
         document.getElementById('setupUI').classList.add('hidden');
         document.getElementById('gameUI').classList.remove('hidden');
@@ -161,21 +168,22 @@
     }
 
     function renderUI() {
-        // 更新分數與最高分高亮
-        const maxVal = Math.max(...state.totals);
+        const maxTotal = Math.max(...state.totals);
         state.players.forEach((p, i) => {
             document.getElementById(`ln${i}`).innerText = p;
             document.getElementById(`tv${i}`).innerText = state.totals[i];
-            const card = document.getElementById(`card${i}`);
-            // 只有在有人領先且不是平局起步時高亮
-            card.classList.toggle('is-highest', state.totals[i] === maxVal && state.history.length > 0);
+            document.getElementById(`card${i}`).classList.toggle('is-highest', state.totals[i] === maxTotal && state.history.length > 0);
+            let streak = 0;
+            for(let j = state.history.length - 1; j >= 0; j--) {
+                if(state.history[j].winIdx === i) streak++; else break;
+            }
+            document.getElementById(`streak${i}`).innerText = streak >= 2 ? `🔥 ${streak}連勝` : '';
         });
 
-        // 歷史表格
         const head = document.getElementById('tHead');
         head.innerHTML = '<th>局</th>';
         state.players.forEach(p => { let th = document.createElement('th'); th.innerText = p; head.appendChild(th); });
-
+        
         const tbody = document.querySelector("#logTable tbody");
         tbody.innerHTML = "";
         [...state.history].reverse().forEach((data, idx) => {
@@ -188,33 +196,76 @@
             tbody.appendChild(tr);
         });
 
-        calculateStats();
+        updateChart();
+        updateStats();
     }
 
-    function calculateStats() {
+    function updateStats() {
+        if (state.history.length === 0) return;
+        let allChanges = [];
+        state.history.forEach(h => h.changes.forEach((v, i) => allChanges.push({v, name: state.players[i]})));
+        const high = allChanges.reduce((a, b) => a.v > b.v ? a : b);
+        const low = allChanges.reduce((a, b) => a.v < b.v ? a : b);
+        document.getElementById('gHighVal').innerText = "+" + high.v;
+        document.getElementById('gHighName').innerText = high.name;
+        document.getElementById('gLowVal').innerText = low.v;
+        document.getElementById('gLowName').innerText = low.name;
+
+        const sBody = document.getElementById('statsBody');
+        const bBody = document.getElementById('bankBody');
+        sBody.innerHTML = ""; bBody.innerHTML = "";
+        for (let i = 0; i < 4; i++) {
+            const pChanges = state.history.map(h => h.changes[i]);
+            const wins = state.history.filter(h => h.winIdx === i).length;
+            const avg = (pChanges.reduce((a, b) => a + b, 0) / state.history.length).toFixed(1);
+            sBody.innerHTML += `<tr><td><b>${state.players[i]}</b></td><td>${((wins/state.history.length)*100).toFixed(0)}%(${wins})</td><td style="color:green">+${Math.max(...pChanges)}</td><td style="color:red">${Math.min(...pChanges)}</td><td>${avg}</td></tr>`;
+            let victimCounts = [0, 0, 0, 0];
+            state.history.forEach(h => { if (h.winIdx === i) h.changes.forEach((c, ci) => { if (c < 0) victimCounts[ci] += Math.abs(c); }); });
+            let vIdx = -1, vMax = 0;
+            victimCounts.forEach((v, vi) => { if(v > vMax) { vMax = v; vIdx = vi; } });
+            if (vIdx !== -1) bBody.innerHTML += `<tr><td>${state.players[i]}</td><td>${state.players[vIdx]}</td><td>${vMax}</td></tr>`;
+        }
+    }
+
+    function updateChart() {
+        const canvas = document.getElementById('scoreChart');
+        const ctx = canvas.getContext('2d');
+        const rect = canvas.getBoundingClientRect();
+        const dpr = window.devicePixelRatio || 1;
+        canvas.width = rect.width * dpr;
+        canvas.height = rect.height * dpr;
+        ctx.scale(dpr, dpr);
+
         if (state.history.length === 0) return;
 
-        // 全場最高最低
-        document.getElementById('gHigh').innerText = Math.max(...state.totals);
-        document.getElementById('gLow').innerText = Math.min(...state.totals);
+        // 圖表邊距，避免線條跑出框外
+        const padX = 10, padY = 15;
+        const rounds = state.history.length + 1;
+        const drawW = rect.width - (padX * 2);
+        const drawH = rect.height - (padY * 2);
+        const stepX = drawW / (rounds - 1 || 1);
 
-        // 個人統計
-        const statsBody = document.getElementById('pStatsBody');
-        statsBody.innerHTML = "";
+        let paths = [[state.startScore], [state.startScore], [state.startScore], [state.startScore]];
+        let current = [state.startScore, state.startScore, state.startScore, state.startScore];
+        let allPoints = [state.startScore];
         
-        for (let i = 0; i < 4; i++) {
-            let pChanges = state.history.map(h => h.changes[i]);
-            let pMax = Math.max(...pChanges);
-            let pMin = Math.min(...pChanges);
-            let pAvg = (pChanges.reduce((a, b) => a + b, 0) / state.history.length).toFixed(1);
-            
-            statsBody.innerHTML += `<tr>
-                <td><b>${state.players[i]}</b></td>
-                <td style="color:green">+${pMax}</td>
-                <td style="color:red">${pMin}</td>
-                <td>${pAvg}</td>
-            </tr>`;
-        }
+        state.history.forEach(h => h.changes.forEach((c, i) => { 
+            current[i] += c; paths[i].push(current[i]); allPoints.push(current[i]); 
+        }));
+
+        const min = Math.min(...allPoints), max = Math.max(...allPoints), range = (max - min) || 1;
+
+        paths.forEach((path, pIdx) => {
+            ctx.beginPath();
+            ctx.strokeStyle = COLORS[pIdx];
+            ctx.lineWidth = 2;
+            path.forEach((val, rIdx) => {
+                const x = padX + (rIdx * stepX);
+                const y = padY + drawH - ((val - min) / range * drawH);
+                if (rIdx === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+            });
+            ctx.stroke();
+        });
     }
 
     let curWinIdx = -1;
@@ -225,9 +276,7 @@
         const container = document.getElementById('loserInputs');
         container.innerHTML = "";
         state.players.forEach((p, i) => {
-            if(i !== idx) {
-                container.innerHTML += `<div class="row"><label>${p}</label><div class="input-wrap"><input type="number" class="score-in" data-idx="${i}" inputmode="numeric" placeholder="0"></div></div>`;
-            }
+            if(i !== idx) container.innerHTML += `<div class="row"><label>${p}</label><div class="input-wrap"><input type="number" class="score-in" data-idx="${i}" inputmode="numeric" placeholder="0"></div></div>`;
         });
         document.getElementById('inputUI').classList.remove('hidden');
     }
@@ -235,11 +284,7 @@
     function submit() {
         const inputs = document.querySelectorAll('.score-in');
         let changes = [0,0,0,0], sum = 0;
-        inputs.forEach(el => {
-            let v = Math.abs(parseInt(el.value) || 0);
-            changes[parseInt(el.dataset.idx)] = -v;
-            sum += v;
-        });
+        inputs.forEach(el => { let v = Math.abs(parseInt(el.value) || 0); changes[parseInt(el.dataset.idx)] = -v; sum += v; });
         changes[curWinIdx] = sum;
         state.totals = state.totals.map((t, i) => t + changes[i]);
         state.history.push({ changes, winIdx: curWinIdx });
@@ -248,27 +293,9 @@
         save(); renderUI();
     }
 
-    function toggleMenu() {
-        const menu = document.getElementById('menuOverlay');
-        menu.style.display = (menu.style.display === 'block') ? 'none' : 'block';
-    }
-
-    function undo() {
-        if (state.history.length === 0) return;
-        if (confirm("要復原上一局嗎？")) {
-            const last = state.history.pop();
-            state.totals = state.totals.map((t, i) => t - last.changes[i]);
-            save(); renderUI(); toggleMenu();
-        }
-    }
-
-    function resetAll() {
-        if (confirm("確定開新局？紀錄將永久清除！")) {
-            localStorage.removeItem('score_data_v4');
-            location.reload();
-        }
-    }
+    function toggleMenu() { const menu = document.getElementById('menuOverlay'); menu.style.display = (menu.style.display === 'block') ? 'none' : 'block'; }
+    function undo() { if (state.history.length > 0 && confirm("要復原上一局嗎？")) { const last = state.history.pop(); state.totals = state.totals.map((t, i) => t - last.changes[i]); save(); renderUI(); toggleMenu(); } }
+    function resetAll() { if (confirm("確定重新開局？紀錄將永久清除！")) { localStorage.removeItem('score_data_v8'); location.reload(); } }
 </script>
-
 </body>
 </html>
