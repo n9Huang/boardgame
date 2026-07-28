@@ -9,6 +9,8 @@
   <link rel="apple-touch-icon" href="apple-touch-icon.png" />
   <link rel="manifest" href="manifest.json" />
   <meta name="theme-color" content="#1a1a1a" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap');
 
@@ -86,6 +88,7 @@
       padding-top: calc(20px + env(safe-area-inset-top));
       padding-left: calc(20px + env(safe-area-inset-left));
       padding-right: calc(20px + env(safe-area-inset-right));
+      padding-bottom: calc(130px + env(safe-area-inset-bottom));
     }
 
     @media (max-width: 600px) {
@@ -382,7 +385,7 @@
   </footer>
 
   <script>
-    const APP_VERSION = 'Z7.29.3';
+    const APP_VERSION = 'Z7.29.5';
     const SERVICE_WORKER_FILE = 'sw.js';
 
     // ── 隨機背景圖 ──
