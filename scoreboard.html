@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>計分表</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap');
+
+    :root {
+      --bg1: #1f1825;
+      --bg2: #3f2a4c;
+      --panel: rgba(255, 255, 255, 0.12);
+      --panel-border: rgba(255, 255, 255, 0.35);
+      --text: #f8f3ff;
+      --muted: #ddccea;
+      --accent: #6ee7b7;
+      --minus: #ff6b6b;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      min-height: 100vh;
+      min-height: 100dvh;
+      font-family: 'Noto Sans TC', sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 20% 15%, rgba(110, 231, 183, 0.16), transparent 45%),
+        radial-gradient(circle at 80% 85%, rgba(143, 216, 255, 0.16), transparent 40%),
+        linear-gradient(145deg, var(--bg1), var(--bg2));
+      display: flex;
+      justify-content: center;
+      padding: calc(64px + env(safe-area-inset-top)) 14px calc(24px + env(safe-area-inset-bottom));
+      user-select: none;
+    }
+
+    .back-btn {
+      position: fixed;
+      top: calc(14px + env(safe-area-inset-top));
+      left: calc(14px + env(safe-area-inset-left));
+      z-index: 20;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255, 255, 255, 0.14);
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      color: #fff;
+      text-decoration: none;
+      backdrop-filter: blur(4px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      transition: transform 0.15s ease, background 0.15s ease;
+    }
+
+    .back-btn:hover {
+      background: rgba(255, 255, 255, 0.24);
+      transform: translateY(-1px);
+    }
+
+    .sheet {
+      width: min(640px, 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .title {
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+    }
+
+    .table-wrap {
+      width: 100%;
+      overflow-x: auto;
+      border: 1px solid var(--panel-border);
+      border-radius: 16px;
+      background: var(--panel);
+      backdrop-filter: blur(6px);
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.3);
+    }
+
+    .grid {
+      display: grid;
+      grid-auto-rows: min-content;
+      min-width: max-content;
+    }
+
+    .cell-base {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 8px 6px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+      border-right: 1px solid rgba(255, 255, 255, 0.14);
+    }
+
+    .head-row, .body-row, .total-row {
+      display: contents;
+    }
+
+    .row-op {
+      width: 34px;
+      background: none;
+      border: none;
+      color: var(--muted);
+      font-size: 16px;
+      cursor: pointer;
+      padding: 8px 4px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+      border-right: 1px solid rgba(255, 255, 255, 0.14);
+    }
+
+    .mult-cell {
+      width: 78px;
+    }
+
+    .mult-input {
+      width: 56px;
+      text-align: center;
+      border-radius: 8px;
+      border: 1px solid var(--panel-border);
+      background: rgba(255, 255, 255, 0.12);
+      color: var(--text);
+      font-size: 15px;
+      font-family: inherit;
+      padding: 6px 2px;
+    }
+
+    .player-head {
+      width: 92px;
+      flex-direction: column;
+      gap: 4px;
+      position: relative;
+    }
+
+    .player-name {
+      width: 100%;
+      text-align: center;
+      border-radius: 8px;
+      border: 1px solid var(--panel-border);
+      background: rgba(255, 255, 255, 0.12);
+      color: var(--text);
+      font-size: 14px;
+      font-weight: 700;
+      font-family: inherit;
+      padding: 6px 2px;
+    }
+
+    .player-remove {
+      position: absolute;
+      top: 2px;
+      right: 2px;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      border: none;
+      background: rgba(255, 107, 107, 0.35);
+      color: #fff;
+      font-size: 11px;
+      line-height: 18px;
+      cursor: pointer;
+      display: none;
+    }
+
+    .player-head.removable .player-remove {
+      display: block;
+    }
+
+    .add-col-cell {
+      width: 44px;
+    }
+
+    .add-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      border: 1px solid var(--panel-border);
+      background: rgba(255, 255, 255, 0.14);
+      color: var(--text);
+      font-size: 18px;
+      cursor: pointer;
+    }
+
+    .score-cell {
+      width: 92px;
+      height: 56px;
+      position: relative;
+      cursor: pointer;
+      background: rgba(255, 255, 255, 0.05);
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .score-cell:active {
+      background: rgba(255, 255, 255, 0.12);
+    }
+
+    .score-cell .value {
+      font-size: 18px;
+      font-weight: 700;
+    }
+
+    .score-cell.is-minus .value {
+      color: var(--minus);
+    }
+
+    .score-cell.is-minus::after {
+      content: '';
+      position: absolute;
+      right: 0;
+      bottom: 0;
+      width: 0;
+      height: 0;
+      border-style: solid;
+      border-width: 0 0 14px 14px;
+      border-color: transparent transparent var(--minus) transparent;
+    }
+
+    .sign-toggle {
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      border: 1px solid var(--panel-border);
+      background: rgba(0, 0, 0, 0.25);
+      color: var(--text);
+      font-size: 12px;
+      line-height: 18px;
+      cursor: pointer;
+    }
+
+    .total-row .cell-base {
+      font-weight: 700;
+      font-size: 16px;
+      border-bottom: none;
+    }
+
+    .row-actions {
+      width: 100%;
+      display: flex;
+      gap: 10px;
+    }
+
+    .action-btn {
+      flex: 1;
+      border-radius: 999px;
+      border: 1px solid var(--panel-border);
+      background: rgba(255, 255, 255, 0.14);
+      color: var(--text);
+      font-size: 15px;
+      font-family: inherit;
+      padding: 10px;
+      min-height: 44px;
+      cursor: pointer;
+    }
+
+    .action-btn.danger {
+      background: rgba(255, 107, 107, 0.16);
+      border-color: rgba(255, 107, 107, 0.4);
+    }
+
+    .hint {
+      color: var(--muted);
+      font-size: 12px;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <a class="back-btn" href="index.html" aria-label="回首頁">
+    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M15 18l-6-6 6-6"/>
+    </svg>
+  </a>
+
+  <div class="sheet">
+    <h1 class="title">計分表</h1>
+    <p class="hint">單擊格子疊加倍率分數・左上角 ± 切換加減・長按格子歸零</p>
+
+    <div class="table-wrap">
+      <div class="grid" id="grid"></div>
+    </div>
+
+    <div class="row-actions">
+      <button class="action-btn" id="add-row-btn" type="button">＋ 新增一列</button>
+      <button class="action-btn danger" id="reset-btn" type="button">重新開始</button>
+    </div>
+  </div>
+
+  <script>
+    const STORAGE_KEY = 'scoreboard_state_v1';
+    const MIN_PLAYERS = 2;
+    const MAX_PLAYERS = 6;
+    const LONG_PRESS_MS = 550;
+
+    function defaultState() {
+      return {
+        players: ['P1', 'P2'],
+        rows: [{ multiplier: 2, cells: [{ count: 0, sign: 1 }, { count: 0, sign: 1 }] }],
+      };
+    }
+
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return defaultState();
+        const parsed = JSON.parse(raw);
+        if (!parsed.players || !parsed.rows) return defaultState();
+        return parsed;
+      } catch (e) {
+        return defaultState();
+      }
+    }
+
+    let state = loadState();
+
+    function save() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }
+
+    function computeTotal(playerIdx) {
+      return state.rows.reduce((sum, row) => {
+        const cell = row.cells[playerIdx];
+        if (!cell) return sum;
+        return sum + cell.count * row.multiplier * cell.sign;
+      }, 0);
+    }
+
+    function renderGrid() {
+      const grid = document.getElementById('grid');
+      const playerCount = state.players.length;
+      grid.style.gridTemplateColumns = `34px 78px repeat(${playerCount}, 92px) 44px`;
+      grid.innerHTML = '';
+
+      // ── 標題列 ──
+      const headRow = document.createElement('div');
+      headRow.className = 'head-row';
+
+      const headCorner1 = document.createElement('div');
+      headCorner1.className = 'cell-base';
+      headRow.appendChild(headCorner1);
+
+      const headCorner2 = document.createElement('div');
+      headCorner2.className = 'cell-base';
+      headCorner2.textContent = '倍率';
+      headRow.appendChild(headCorner2);
+
+      state.players.forEach((name, pIdx) => {
+        const head = document.createElement('div');
+        head.className = 'cell-base player-head';
+        if (playerCount > MIN_PLAYERS) head.classList.add('removable');
+
+        const input = document.createElement('input');
+        input.className = 'player-name';
+        input.value = name;
+        input.addEventListener('change', () => {
+          state.players[pIdx] = input.value.trim() || `P${pIdx + 1}`;
+          save();
+        });
+        head.appendChild(input);
+
+        const removeBtn = document.createElement('button');
+        removeBtn.className = 'player-remove';
+        removeBtn.textContent = '×';
+        removeBtn.title = '移除玩家';
+        removeBtn.addEventListener('click', () => removePlayer(pIdx));
+        head.appendChild(removeBtn);
+
+        headRow.appendChild(head);
+      });
+
+      const addPlayerCell = document.createElement('div');
+      addPlayerCell.className = 'cell-base add-col-cell';
+      if (playerCount < MAX_PLAYERS) {
+        const addBtn = document.createElement('button');
+        addBtn.className = 'add-btn';
+        addBtn.textContent = '+';
+        addBtn.title = '新增玩家';
+        addBtn.addEventListener('click', addPlayer);
+        addPlayerCell.appendChild(addBtn);
+      }
+      headRow.appendChild(addPlayerCell);
+      grid.appendChild(headRow);
+
+      // ── 每一列 ──
+      state.rows.forEach((row, rIdx) => {
+        const bodyRow = document.createElement('div');
+        bodyRow.className = 'body-row';
+
+        const delBtn = document.createElement('button');
+        delBtn.className = 'row-op';
+        delBtn.textContent = '×';
+        delBtn.title = '刪除此列';
+        delBtn.addEventListener('click', () => removeRow(rIdx));
+        bodyRow.appendChild(delBtn);
+
+        const multCell = document.createElement('div');
+        multCell.className = 'cell-base mult-cell';
+        const multInput = document.createElement('input');
+        multInput.className = 'mult-input';
+        multInput.type = 'number';
+        multInput.value = row.multiplier;
+        multInput.addEventListener('change', () => {
+          const v = Number(multInput.value);
+          row.multiplier = Number.isFinite(v) && v !== 0 ? v : 1;
+          save();
+          renderGrid();
+        });
+        multCell.appendChild(multInput);
+        bodyRow.appendChild(multCell);
+
+        state.players.forEach((_, pIdx) => {
+          if (!row.cells[pIdx]) row.cells[pIdx] = { count: 0, sign: 1 };
+          const cell = row.cells[pIdx];
+
+          const cellEl = document.createElement('div');
+          cellEl.className = 'cell-base score-cell';
+          if (cell.sign === -1) cellEl.classList.add('is-minus');
+
+          const valueEl = document.createElement('div');
+          valueEl.className = 'value';
+          valueEl.textContent = cell.count * row.multiplier * cell.sign;
+          cellEl.appendChild(valueEl);
+
+          const toggleBtn = document.createElement('button');
+          toggleBtn.className = 'sign-toggle';
+          toggleBtn.textContent = cell.sign === 1 ? '+' : '−';
+          toggleBtn.title = '切換加減';
+          toggleBtn.addEventListener('click', (evt) => {
+            evt.stopPropagation();
+            cell.sign = cell.sign === 1 ? -1 : 1;
+            save();
+            renderGrid();
+          });
+          cellEl.appendChild(toggleBtn);
+
+          attachCellGestures(cellEl, cell, row, () => {
+            valueEl.textContent = cell.count * row.multiplier * cell.sign;
+            renderTotals();
+          });
+
+          bodyRow.appendChild(cellEl);
+        });
+
+        const spacer = document.createElement('div');
+        spacer.className = 'cell-base add-col-cell';
+        bodyRow.appendChild(spacer);
+
+        grid.appendChild(bodyRow);
+      });
+
+      renderTotalsRow(grid, playerCount);
+    }
+
+    function renderTotalsRow(grid, playerCount) {
+      const totalRow = document.createElement('div');
+      totalRow.className = 'total-row';
+
+      const c1 = document.createElement('div');
+      c1.className = 'cell-base';
+      totalRow.appendChild(c1);
+
+      const c2 = document.createElement('div');
+      c2.className = 'cell-base';
+      c2.textContent = '總分';
+      totalRow.appendChild(c2);
+
+      for (let i = 0; i < playerCount; i++) {
+        const c = document.createElement('div');
+        c.className = 'cell-base total-cell';
+        c.id = `total-${i}`;
+        c.textContent = computeTotal(i);
+        totalRow.appendChild(c);
+      }
+
+      const c3 = document.createElement('div');
+      c3.className = 'cell-base';
+      totalRow.appendChild(c3);
+
+      grid.appendChild(totalRow);
+    }
+
+    function renderTotals() {
+      state.players.forEach((_, i) => {
+        const el = document.getElementById(`total-${i}`);
+        if (el) el.textContent = computeTotal(i);
+      });
+    }
+
+    function attachCellGestures(cellEl, cell, row, onChange) {
+      let pressTimer = null;
+      let longPressed = false;
+
+      cellEl.addEventListener('pointerdown', () => {
+        longPressed = false;
+        pressTimer = setTimeout(() => {
+          longPressed = true;
+          cell.count = 0;
+          onChange();
+          save();
+        }, LONG_PRESS_MS);
+      });
+
+      const clearPress = () => {
+        if (pressTimer) {
+          clearTimeout(pressTimer);
+          pressTimer = null;
+        }
+      };
+
+      cellEl.addEventListener('pointerup', () => {
+        clearPress();
+        if (!longPressed) {
+          cell.count += 1;
+          onChange();
+          save();
+        }
+      });
+
+      cellEl.addEventListener('pointerleave', clearPress);
+      cellEl.addEventListener('pointercancel', clearPress);
+    }
+
+    function addPlayer() {
+      if (state.players.length >= MAX_PLAYERS) return;
+      const idx = state.players.length + 1;
+      state.players.push(`P${idx}`);
+      state.rows.forEach((row) => row.cells.push({ count: 0, sign: 1 }));
+      save();
+      renderGrid();
+    }
+
+    function removePlayer(pIdx) {
+      if (state.players.length <= MIN_PLAYERS) return;
+      state.players.splice(pIdx, 1);
+      state.rows.forEach((row) => row.cells.splice(pIdx, 1));
+      save();
+      renderGrid();
+    }
+
+    function addRow() {
+      state.rows.push({
+        multiplier: 2,
+        cells: state.players.map(() => ({ count: 0, sign: 1 })),
+      });
+      save();
+      renderGrid();
+    }
+
+    function removeRow(rIdx) {
+      state.rows.splice(rIdx, 1);
+      save();
+      renderGrid();
+    }
+
+    function resetAll() {
+      if (!confirm('確定要重新開始嗎？目前的紀錄將會清除。')) return;
+      state = defaultState();
+      save();
+      renderGrid();
+    }
+
+    document.getElementById('add-row-btn').addEventListener('click', addRow);
+    document.getElementById('reset-btn').addEventListener('click', resetAll);
+
+    renderGrid();
+  </script>
+</body>
+</html>

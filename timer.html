@@ -144,8 +144,7 @@
 
     .quick-btn,
     .custom-input,
-    .go-btn,
-    .home-link {
+    .go-btn {
       border-radius: 999px;
       border: 1px solid var(--panel-border);
       background: rgba(255, 255, 255, 0.14);
@@ -156,6 +155,41 @@
       min-height: 44px;
       text-align: center;
       text-decoration: none;
+    }
+
+    /* ── 共用返回按鈕元件 ── */
+    .back-btn {
+      position: fixed;
+      top: calc(14px + env(safe-area-inset-top));
+      left: calc(14px + env(safe-area-inset-left));
+      z-index: 20;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255, 255, 255, 0.14);
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      color: #fff;
+      text-decoration: none;
+      backdrop-filter: blur(4px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      transition: transform 0.15s ease, background 0.15s ease;
+    }
+
+    .back-btn:hover {
+      background: rgba(255, 255, 255, 0.24);
+      transform: translateY(-1px);
+    }
+
+    .back-btn:active {
+      transform: translateY(0);
+    }
+
+    .back-btn:focus-visible {
+      outline: 3px solid rgba(255, 255, 255, 0.9);
+      outline-offset: 3px;
     }
 
     .quick-btn,
@@ -238,14 +272,19 @@
 
       .quick-btn,
       .custom-input,
-      .go-btn,
-      .home-link {
+      .go-btn {
         font-size: 15px;
       }
     }
   </style>
 </head>
 <body>
+  <a class="back-btn" href="index.html" aria-label="回首頁">
+    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M15 18l-6-6 6-6"/>
+    </svg>
+  </a>
+
   <main class="timer-shell" id="timer-shell">
     <h1 class="title">計時器</h1>
     <p class="hint" id="hint">預設 2 分鐘，點圓形可重新計時</p>
@@ -272,7 +311,6 @@
       <button class="go-btn" id="custom-go" type="button">套用</button>
     </div>
 
-    <a class="home-link" href="index.html">回首頁</a>
   </main>
 
   <script>

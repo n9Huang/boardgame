@@ -388,9 +388,37 @@
       transition: background 0.2s;
     }
     .test-btn:active { background: rgba(200,168,75,0.18); }
+
+    /* ── 共用返回按鈕元件 ── */
+    .back-btn {
+      position: fixed;
+      top: max(14px, env(safe-area-inset-top));
+      left: max(14px, env(safe-area-inset-left));
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--gold);
+      text-decoration: none;
+      z-index: 200;
+      opacity: 0.6;
+      transition: opacity 0.2s;
+    }
+    .back-btn:hover { opacity: 1; }
   </style>
 </head>
 <body>
+
+  <!-- 返回首頁 -->
+  <a class="back-btn" href="index.html" aria-label="回首頁">
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M15 18l-6-6 6-6"/>
+    </svg>
+  </a>
 
   <!-- 設定齒輪 -->
   <button class="settings-toggle" id="settingsToggle" title="語音設定">

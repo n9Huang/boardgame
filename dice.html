@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>骰子</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap');
+
+    :root {
+      --bg1: #1f1825;
+      --bg2: #3f2a4c;
+      --panel: rgba(255, 255, 255, 0.12);
+      --panel-border: rgba(255, 255, 255, 0.35);
+      --text: #f8f3ff;
+      --muted: #ddccea;
+      --accent: #facc15;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      min-height: 100vh;
+      min-height: 100dvh;
+      font-family: 'Noto Sans TC', sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 20% 15%, rgba(250, 204, 21, 0.18), transparent 45%),
+        radial-gradient(circle at 80% 85%, rgba(143, 216, 255, 0.18), transparent 40%),
+        linear-gradient(145deg, var(--bg1), var(--bg2));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: calc(18px + env(safe-area-inset-top)) 18px calc(24px + env(safe-area-inset-bottom));
+    }
+
+    .back-btn {
+      position: fixed;
+      top: calc(14px + env(safe-area-inset-top));
+      left: calc(14px + env(safe-area-inset-left));
+      z-index: 20;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255, 255, 255, 0.14);
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      color: #fff;
+      text-decoration: none;
+      backdrop-filter: blur(4px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      transition: transform 0.15s ease, background 0.15s ease;
+    }
+
+    .back-btn:hover {
+      background: rgba(255, 255, 255, 0.24);
+      transform: translateY(-1px);
+    }
+
+    .back-btn:focus-visible {
+      outline: 3px solid rgba(255, 255, 255, 0.9);
+      outline-offset: 3px;
+    }
+
+    .dice-shell {
+      width: min(460px, 100%);
+      border: 1px solid var(--panel-border);
+      border-radius: 22px;
+      background: var(--panel);
+      backdrop-filter: blur(6px);
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+      padding: 24px 18px 22px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 18px;
+    }
+
+    .title {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+    }
+
+    .count-row {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .count-btn {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      border: 1px solid var(--panel-border);
+      background: rgba(255, 255, 255, 0.14);
+      color: var(--text);
+      font-size: 20px;
+      cursor: pointer;
+      transition: transform 0.12s ease, background 0.15s ease;
+    }
+
+    .count-btn:active {
+      transform: scale(0.94);
+      background: rgba(255, 255, 255, 0.23);
+    }
+
+    .count-display {
+      min-width: 64px;
+      text-align: center;
+      font-size: 16px;
+      color: var(--muted);
+      letter-spacing: 1px;
+    }
+
+    .count-display span {
+      color: var(--text);
+      font-size: 20px;
+      font-weight: 700;
+    }
+
+    .dice-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      width: 100%;
+      justify-items: center;
+    }
+
+    .die {
+      width: 68px;
+      height: 68px;
+      background: #fdfdfd;
+      border-radius: 14px;
+      box-shadow: 0 6px 14px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      grid-template-rows: repeat(3, 1fr);
+      padding: 10px;
+      transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.3, 1.2);
+    }
+
+    .die.rolling {
+      animation: die-spin 0.5s ease-in-out;
+    }
+
+    @keyframes die-spin {
+      0%   { transform: rotate(0deg) scale(1); }
+      50%  { transform: rotate(200deg) scale(1.08); }
+      100% { transform: rotate(360deg) scale(1); }
+    }
+
+    .pip {
+      width: 11px;
+      height: 11px;
+      border-radius: 50%;
+      background: #1a1a1a;
+      align-self: center;
+      justify-self: center;
+      opacity: 0;
+    }
+
+    .die[data-value="1"] .pip:nth-child(5) { opacity: 1; }
+    .die[data-value="2"] .pip:nth-child(1),
+    .die[data-value="2"] .pip:nth-child(9) { opacity: 1; }
+    .die[data-value="3"] .pip:nth-child(1),
+    .die[data-value="3"] .pip:nth-child(5),
+    .die[data-value="3"] .pip:nth-child(9) { opacity: 1; }
+    .die[data-value="4"] .pip:nth-child(1),
+    .die[data-value="4"] .pip:nth-child(3),
+    .die[data-value="4"] .pip:nth-child(7),
+    .die[data-value="4"] .pip:nth-child(9) { opacity: 1; }
+    .die[data-value="5"] .pip:nth-child(1),
+    .die[data-value="5"] .pip:nth-child(3),
+    .die[data-value="5"] .pip:nth-child(5),
+    .die[data-value="5"] .pip:nth-child(7),
+    .die[data-value="5"] .pip:nth-child(9) { opacity: 1; }
+    .die[data-value="6"] .pip:nth-child(1),
+    .die[data-value="6"] .pip:nth-child(3),
+    .die[data-value="6"] .pip:nth-child(4),
+    .die[data-value="6"] .pip:nth-child(6),
+    .die[data-value="6"] .pip:nth-child(7),
+    .die[data-value="6"] .pip:nth-child(9) { opacity: 1; }
+
+    .roll-btn {
+      width: 100%;
+      border-radius: 999px;
+      border: 1px solid var(--panel-border);
+      background: rgba(250, 204, 21, 0.22);
+      color: var(--text);
+      font-size: 18px;
+      font-weight: 700;
+      font-family: inherit;
+      padding: 12px;
+      min-height: 48px;
+      cursor: pointer;
+      letter-spacing: 2px;
+      transition: transform 0.12s ease, background 0.15s ease;
+    }
+
+    .roll-btn:active {
+      transform: scale(0.98);
+      background: rgba(250, 204, 21, 0.32);
+    }
+
+    .total-line {
+      font-size: 14px;
+      color: var(--muted);
+      letter-spacing: 1px;
+      min-height: 1.4em;
+    }
+  </style>
+</head>
+<body>
+  <a class="back-btn" href="index.html" aria-label="回首頁">
+    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M15 18l-6-6 6-6"/>
+    </svg>
+  </a>
+
+  <main class="dice-shell">
+    <h1 class="title">骰子</h1>
+
+    <div class="count-row">
+      <button class="count-btn" id="count-minus" type="button" aria-label="減少骰子">−</button>
+      <div class="count-display"><span id="count-num">2</span> 顆</div>
+      <button class="count-btn" id="count-plus" type="button" aria-label="增加骰子">+</button>
+    </div>
+
+    <div class="dice-grid" id="dice-grid"></div>
+
+    <div class="total-line" id="total-line">總點數：--</div>
+
+    <button class="roll-btn" id="roll-btn" type="button">擲骰</button>
+  </main>
+
+  <script>
+    const MIN_DICE = 1;
+    const MAX_DICE = 6;
+    const STORAGE_KEY = 'dice_count_v1';
+
+    const countNum = document.getElementById('count-num');
+    const countMinus = document.getElementById('count-minus');
+    const countPlus = document.getElementById('count-plus');
+    const diceGrid = document.getElementById('dice-grid');
+    const rollBtn = document.getElementById('roll-btn');
+    const totalLine = document.getElementById('total-line');
+
+    let diceCount = Number(localStorage.getItem(STORAGE_KEY)) || 2;
+    if (diceCount < MIN_DICE || diceCount > MAX_DICE) diceCount = 2;
+
+    let values = Array(diceCount).fill(1);
+
+    function buildPips() {
+      let html = '';
+      for (let i = 0; i < 9; i++) html += '<div class="pip"></div>';
+      return html;
+    }
+
+    function renderDice() {
+      countNum.textContent = diceCount;
+      diceGrid.innerHTML = '';
+      for (let i = 0; i < diceCount; i++) {
+        const die = document.createElement('div');
+        die.className = 'die';
+        die.dataset.value = values[i] || 1;
+        die.innerHTML = buildPips();
+        diceGrid.appendChild(die);
+      }
+      updateTotal();
+    }
+
+    function updateTotal() {
+      const sum = values.slice(0, diceCount).reduce((a, b) => a + b, 0);
+      totalLine.textContent = `總點數：${sum}`;
+    }
+
+    function setDiceCount(next) {
+      const n = Math.max(MIN_DICE, Math.min(MAX_DICE, next));
+      diceCount = n;
+      localStorage.setItem(STORAGE_KEY, String(n));
+      while (values.length < n) values.push(1);
+      renderDice();
+    }
+
+    function rollDice() {
+      const dieEls = Array.from(diceGrid.children);
+      dieEls.forEach((die, i) => {
+        die.classList.remove('rolling');
+        void die.offsetWidth;
+        die.classList.add('rolling');
+        const finalValue = 1 + Math.floor(Math.random() * 6);
+        values[i] = finalValue;
+        setTimeout(() => {
+          die.dataset.value = finalValue;
+        }, 250);
+        die.addEventListener('animationend', () => die.classList.remove('rolling'), { once: true });
+      });
+      setTimeout(updateTotal, 260);
+    }
+
+    countMinus.addEventListener('click', () => setDiceCount(diceCount - 1));
+    countPlus.addEventListener('click', () => setDiceCount(diceCount + 1));
+    rollBtn.addEventListener('click', rollDice);
+
+    renderDice();
+  </script>
+</body>
+</html>

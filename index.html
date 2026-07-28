@@ -79,6 +79,14 @@
       padding-right: calc(20px + env(safe-area-inset-right));
     }
 
+    @media (max-width: 600px) {
+      .container {
+        padding-top: 20px;
+        padding-left: 20px;
+        padding-right: 20px;
+      }
+    }
+
     /* ── 標題 PNG ── */
     .title-logo {
       width: min(500px, 90vw);
@@ -135,7 +143,17 @@
 
     .tool-btn:hover .tool-icon {
       border-color: rgba(255,255,255,0.58);
-      box-shadow: 0 10px 20px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.28);
+      box-shadow: 0 10px 20px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.28), 0 0 18px var(--accent, transparent);
+    }
+
+    .tool-icon.icon-timer { --accent: rgba(56, 189, 248, 0.65); }
+    .tool-icon.icon-score { --accent: rgba(110, 231, 183, 0.65); }
+    .tool-icon.icon-big2  { --accent: rgba(248, 113, 113, 0.65); }
+    .tool-icon.icon-dice  { --accent: rgba(250, 204, 21, 0.65); }
+    .tool-icon.icon-cabin { --accent: rgba(200, 168, 75, 0.65); }
+
+    .icon-img {
+      filter: drop-shadow(0 2px 3px rgba(0,0,0,0.35));
     }
 
     .tool-btn.is-disabled,
@@ -198,6 +216,29 @@
       backdrop-filter: blur(2px);
     }
 
+    .update-button {
+      border: none;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.18);
+      color: #fff;
+      font-size: 13px;
+      letter-spacing: 0.5px;
+      padding: 6px 14px;
+      cursor: pointer;
+      transition: transform 0.15s ease, background 0.15s ease;
+    }
+
+    .update-button:hover {
+      background: rgba(255, 255, 255, 0.3);
+      transform: translateY(-1px);
+    }
+
+    .update-button:disabled {
+      opacity: 0.6;
+      cursor: default;
+      transform: none;
+    }
+
     .footer a {
       color: #fff;
       text-decoration: none;
@@ -236,40 +277,42 @@
 
       <!-- 計時器 -->
       <a class="tool-btn" href="timer.html">
-        <div class="tool-icon">
+        <div class="tool-icon icon-timer">
           <svg class="icon-img" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="32" cy="36" r="22" stroke="#1a1a1a" stroke-width="4" fill="none"/>
-            <path d="M32 36 L32 20" stroke="#1a1a1a" stroke-width="4" stroke-linecap="round"/>
-            <path d="M26 8 L38 8" stroke="#1a1a1a" stroke-width="4" stroke-linecap="round"/>
-            <path d="M32 8 L32 14" stroke="#1a1a1a" stroke-width="4" stroke-linecap="round"/>
-            <path d="M50 18 L54 14" stroke="#1a1a1a" stroke-width="3" stroke-linecap="round"/>
-            <circle cx="32" cy="36" r="3" fill="#1a1a1a"/>
+            <circle cx="32" cy="36" r="22" fill="#38bdf8" fill-opacity="0.18"/>
+            <circle cx="32" cy="36" r="22" stroke="#38bdf8" stroke-width="4" fill="none"/>
+            <path d="M32 36 L32 20" stroke="#e8f7ff" stroke-width="4" stroke-linecap="round"/>
+            <path d="M26 8 L38 8" stroke="#38bdf8" stroke-width="4" stroke-linecap="round"/>
+            <path d="M32 8 L32 14" stroke="#38bdf8" stroke-width="4" stroke-linecap="round"/>
+            <path d="M50 18 L54 14" stroke="#38bdf8" stroke-width="3" stroke-linecap="round"/>
+            <circle cx="32" cy="36" r="3" fill="#e8f7ff"/>
           </svg>
         </div>
         <span class="tool-label">計時器</span>
       </a>
 
       <!-- 計分表 -->
-      <a class="tool-btn is-disabled" href="scoreboard.html" aria-disabled="true" tabindex="-1">
-        <div class="tool-icon">
+      <a class="tool-btn" href="scoreboard.html">
+        <div class="tool-icon icon-score">
           <svg class="icon-img" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <rect x="8" y="8" width="48" height="48" rx="6" stroke="#1a1a1a" stroke-width="4" fill="none"/>
+            <rect x="8" y="8" width="48" height="48" rx="6" fill="#6ee7b7" fill-opacity="0.16"/>
+            <rect x="8" y="8" width="48" height="48" rx="6" stroke="#6ee7b7" stroke-width="4" fill="none"/>
             <text x="32" y="42" text-anchor="middle" font-family="Bangers,sans-serif"
-                  font-size="26" fill="#1a1a1a" font-weight="bold">2:0</text>
+                  font-size="26" fill="#eafff5" font-weight="bold">2:0</text>
           </svg>
         </div>
         <span class="tool-label">計分表</span>
       </a>
 
       <!-- 大老二 -->
-      <a class="tool-btn is-disabled" href="big2.html" aria-disabled="true" tabindex="-1">
-        <div class="tool-icon">
+      <a class="tool-btn" href="big2.html">
+        <div class="tool-icon icon-big2">
           <svg class="icon-img" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <rect x="6" y="6" width="24" height="24" rx="4" fill="#f0f0f0"/>
-            <line x1="12" y1="18" x2="24" y2="18" stroke="#1a1a1a" stroke-width="3" stroke-linecap="round"/>
-            <line x1="12" y1="12" x2="24" y2="12" stroke="#1a1a1a" stroke-width="3" stroke-linecap="round"/>
-            <line x1="18" y1="12" x2="18" y2="24" stroke="#1a1a1a" stroke-width="3" stroke-linecap="round"/>
-            <rect x="34" y="34" width="24" height="24" rx="4" fill="#f0f0f0"/>
+            <rect x="6" y="6" width="24" height="24" rx="4" fill="#fff5f5"/>
+            <line x1="12" y1="18" x2="24" y2="18" stroke="#f87171" stroke-width="3" stroke-linecap="round"/>
+            <line x1="12" y1="12" x2="24" y2="12" stroke="#f87171" stroke-width="3" stroke-linecap="round"/>
+            <line x1="18" y1="12" x2="18" y2="24" stroke="#f87171" stroke-width="3" stroke-linecap="round"/>
+            <rect x="34" y="34" width="24" height="24" rx="4" fill="#fff5f5"/>
             <line x1="40" y1="46" x2="52" y2="46" stroke="#1a1a1a" stroke-width="3" stroke-linecap="round"/>
             <line x1="40" y1="41" x2="52" y2="41" stroke="#1a1a1a" stroke-width="3" stroke-linecap="round"/>
             <line x1="40" y1="51" x2="52" y2="51" stroke="#1a1a1a" stroke-width="3" stroke-linecap="round"/>
@@ -280,18 +323,18 @@
       </a>
 
       <!-- 骰子 -->
-      <a class="tool-btn is-disabled" href="dice.html" aria-disabled="true" tabindex="-1">
-        <div class="tool-icon">
+      <a class="tool-btn" href="dice.html">
+        <div class="tool-icon icon-dice">
           <svg class="icon-img" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
             <!-- 後方骰子 -->
-            <rect x="22" y="16" width="34" height="34" rx="6" fill="#e0e0e0" stroke="#999" stroke-width="2"/>
+            <rect x="22" y="16" width="34" height="34" rx="6" fill="#fff8e1" stroke="#facc15" stroke-width="2"/>
             <circle cx="31" cy="25" r="3" fill="#1a1a1a"/>
             <circle cx="47" cy="25" r="3" fill="#1a1a1a"/>
             <circle cx="39" cy="33" r="3" fill="#1a1a1a"/>
             <circle cx="31" cy="41" r="3" fill="#1a1a1a"/>
             <circle cx="47" cy="41" r="3" fill="#1a1a1a"/>
             <!-- 前方骰子 -->
-            <rect x="6" y="26" width="30" height="30" rx="6" fill="#f5f5f5" stroke="#777" stroke-width="2"/>
+            <rect x="6" y="26" width="30" height="30" rx="6" fill="#fffef5" stroke="#facc15" stroke-width="2"/>
             <circle cx="16" cy="36" r="3" fill="#1a1a1a"/>
             <circle cx="26" cy="36" r="3" fill="#1a1a1a"/>
             <circle cx="21" cy="46" r="3" fill="#1a1a1a"/>
@@ -302,7 +345,7 @@
 
       <!-- 山中小屋 -->
       <a class="tool-btn" href="cabin.html">
-        <div class="tool-icon">
+        <div class="tool-icon icon-cabin">
           <svg class="icon-img" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
             <!-- 小屋輪廓 -->
             <path d="M8 32 L32 10 L56 32" stroke="#c8a84b" stroke-width="2.5" stroke-linejoin="round"/>
@@ -325,11 +368,13 @@
   <!-- 底部 -->
   <footer class="footer">
     <div class="version-line" id="version-line">版本：--</div>
+    <button class="update-button" id="update-button" type="button" disabled>檢查新版本</button>
     <a href="mailto:contact@example.com">連絡我</a>
   </footer>
 
   <script>
-    const APP_VERSION = 'Z7.28.1';
+    const APP_VERSION = 'Z7.28.2';
+    const SERVICE_WORKER_FILE = 'sw.js';
 
     // ── 隨機背景圖 ──
     const bgs = ['bg1.jpg', 'bg2.jpg', 'bg3.jpg', 'bg4.jpg'];
@@ -337,8 +382,9 @@
     document.body.style.backgroundImage = `url('${chosen}')`;
 
     const versionLine = document.getElementById('version-line');
+    const updateButton = document.getElementById('update-button');
+
     if (versionLine) {
-      // 第一階段先顯示版本，第二階段再接 sw.js 版本比對。
       versionLine.textContent = `版本：${APP_VERSION}`;
     }
 
@@ -347,6 +393,68 @@
         evt.preventDefault();
       });
     });
+
+    function setUpdateStatus(statusText, buttonText, disabled = false) {
+      if (versionLine) versionLine.textContent = `版本：${APP_VERSION} ${statusText}`;
+      if (updateButton) {
+        updateButton.textContent = buttonText;
+        updateButton.disabled = disabled;
+      }
+    }
+
+    async function checkForUpdate() {
+      if (!('serviceWorker' in navigator) || !updateButton) {
+        setUpdateStatus('（無法檢查）', '不可用', true);
+        return;
+      }
+
+      setUpdateStatus('（檢查中...）', '檢查中', true);
+
+      try {
+        const response = await fetch(SERVICE_WORKER_FILE, { cache: 'no-store' });
+        if (!response.ok) throw new Error('無法取得 sw.js');
+        const content = await response.text();
+        const versionMatch = content.match(/const VERSION = '(.+)';/);
+        const swVersion = versionMatch ? versionMatch[1] : null;
+
+        if (swVersion && swVersion !== APP_VERSION) {
+          setUpdateStatus('（有新版本）', '重新整理', false);
+          updateButton.onclick = () => window.location.reload(true);
+          return;
+        }
+
+        setUpdateStatus('（最新）', '目前最新', true);
+      } catch (error) {
+        setUpdateStatus('（檢查失敗）', '重試', false);
+        updateButton.onclick = checkForUpdate;
+      }
+    }
+
+    async function registerServiceWorker() {
+      if (!('serviceWorker' in navigator)) return;
+      try {
+        const registration = await navigator.serviceWorker.register('sw.js');
+        if (registration.waiting) {
+          setUpdateStatus('（有新版本）', '重新整理', false);
+          updateButton.onclick = () => window.location.reload(true);
+          return;
+        }
+
+        registration.addEventListener('updatefound', () => {
+          setUpdateStatus('（有新版本）', '重新整理', false);
+          updateButton.onclick = () => window.location.reload(true);
+        });
+
+        setUpdateStatus('（已註冊）', '檢查新版本', false);
+        updateButton.onclick = checkForUpdate;
+        await checkForUpdate();
+      } catch (error) {
+        setUpdateStatus('（註冊失敗）', '重試', false);
+        updateButton.onclick = registerServiceWorker;
+      }
+    }
+
+    registerServiceWorker();
 
     // ── 讀取動畫：GIF 播放一段時間後淡出 ──
     window.addEventListener('load', () => {
