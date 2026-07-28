@@ -1,0 +1,13 @@
+{
+  "name": "Board Game 桌遊小工具",
+  "short_name": "桌遊工具",
+  "start_url": "index.html",
+  "scope": ".",
+  "display": "standalone",
+  "background_color": "#c9b89a",
+  "theme_color": "#1a1a1a",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
