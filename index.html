@@ -55,17 +55,25 @@
       flex-direction: column;
       align-items: center;
       justify-content: flex-start;
-      background-color: #c9b89a;
-      background-size: cover;
-      background-position: center;
-      background-repeat: no-repeat;
       font-family: 'Noto Sans TC', sans-serif;
       position: relative;
     }
 
+    /* ── 固定背景層：內容可上下捲動，背景不會跟著移動 ── */
+    .bg-layer {
+      position: fixed;
+      inset: 0;
+      z-index: -2;
+      background-color: #c9b89a;
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      pointer-events: none;
+    }
+
     /* 半透明遮罩讓按鈕更清晰 */
     /* 透明漸層遮罩：左到右 白50% → 白25% → 白50% */
-    body::before {
+    .bg-layer::before {
       content: '';
       position: absolute;
       inset: 0;
@@ -73,7 +81,6 @@
         rgba(255,255,255,0.70) 0%,
         rgba(255,255,255,0.20) 50%,
         rgba(255,255,255,0.70) 100%);
-      pointer-events: none;
     }
 
     .container {
@@ -88,7 +95,7 @@
       padding-top: calc(20px + env(safe-area-inset-top));
       padding-left: calc(20px + env(safe-area-inset-left));
       padding-right: calc(20px + env(safe-area-inset-right));
-      padding-bottom: calc(130px + env(safe-area-inset-bottom));
+      padding-bottom: calc(20px + env(safe-area-inset-bottom));
     }
 
     @media (max-width: 600px) {
@@ -204,16 +211,12 @@
 
     /* ── 底部連絡我 ── */
     .footer {
-      position: fixed;
-      bottom: calc(16px + env(safe-area-inset-bottom));
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 10;
       display: flex;
       flex-direction: column;
       align-items: center;
       gap: 6px;
       min-width: 220px;
+      margin-top: 20px;
     }
 
     .version-line {
@@ -273,6 +276,9 @@
   </style>
 </head>
 <body>
+
+  <!-- 固定背景層 -->
+  <div class="bg-layer" id="bg-layer"></div>
 
   <!-- 讀取動畫 -->
   <div id="loading-screen">
@@ -375,23 +381,24 @@
       </a>
 
     </div>
+
+    <!-- 底部 -->
+    <footer class="footer">
+      <div class="version-line" id="version-line">版本：--</div>
+      <button class="update-button" id="update-button" type="button" disabled>檢查新版本</button>
+      <a href="mailto:contact@example.com">連絡我</a>
+    </footer>
+
   </div>
 
-  <!-- 底部 -->
-  <footer class="footer">
-    <div class="version-line" id="version-line">版本：--</div>
-    <button class="update-button" id="update-button" type="button" disabled>檢查新版本</button>
-    <a href="mailto:contact@example.com">連絡我</a>
-  </footer>
-
   <script>
-    const APP_VERSION = 'Z7.29.5';
+    const APP_VERSION = 'Z7.29.6';
     const SERVICE_WORKER_FILE = 'sw.js';
 
     // ── 隨機背景圖 ──
     const bgs = ['bg1.jpg', 'bg2.jpg', 'bg3.jpg', 'bg4.jpg'];
     const chosen = bgs[Math.floor(Math.random() * bgs.length)];
-    document.body.style.backgroundImage = `url('${chosen}')`;
+    document.getElementById('bg-layer').style.backgroundImage = `url('${chosen}')`;
 
     const versionLine = document.getElementById('version-line');
     const updateButton = document.getElementById('update-button');
