@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <title>山中小屋 — 事件卡</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;600;700&family=Ma+Shan+Zheng&family=Uncial+Antiqua&display=swap" rel="stylesheet" />
@@ -20,6 +20,8 @@
     }
 
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html, body { overscroll-behavior: none; }
 
     body {
       min-height: 100vh;
@@ -593,8 +595,27 @@ function shuffle(arr) {
   return arr;
 }
 
+const DECK_STORAGE_KEY = 'cabin_deck_v1';
+
+function loadDeck() {
+  try {
+    const raw = localStorage.getItem(DECK_STORAGE_KEY);
+    if (!raw) return null;
+    const arr = JSON.parse(raw);
+    if (Array.isArray(arr) && arr.every((i) => Number.isInteger(i) && i >= 0 && i < CARDS.length)) {
+      return arr;
+    }
+  } catch (e) { /* 忽略壞資料，改洗新牌堆 */ }
+  return null;
+}
+
+function saveDeck() {
+  localStorage.setItem(DECK_STORAGE_KEY, JSON.stringify(deck));
+}
+
 function resetDeck() {
   deck = shuffle([...Array(CARDS.length).keys()]);
+  saveDeck();
 }
 
 function updateCounter() {
@@ -831,6 +852,7 @@ function playDrawSound() {
 function revealCard() {
   if (deck.length === 0) resetDeck();
   const idx = deck.pop();
+  saveDeck();
   currentCard = CARDS[idx];
   updateCounter();
   state = 'story';
@@ -961,7 +983,7 @@ nextBtn.addEventListener('click', () => {
 ttsBtn.addEventListener('click', e => { e.stopPropagation(); replayTTS(); });
 
 // ── 初始化 ──
-resetDeck();
+deck = loadDeck() || shuffle([...Array(CARDS.length).keys()]);
 updateCounter();
 </script>
 </body>

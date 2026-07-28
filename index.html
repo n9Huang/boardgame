@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <title>Board Game 桌遊小工具</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap');
@@ -11,6 +11,10 @@
       margin: 0;
       padding: 0;
       box-sizing: border-box;
+    }
+
+    html, body {
+      overscroll-behavior: none;
     }
 
     /* ── 讀取畫面 ── */
@@ -373,7 +377,7 @@
   </footer>
 
   <script>
-    const APP_VERSION = 'Z7.28.2';
+    const APP_VERSION = 'Z7.29.2';
     const SERVICE_WORKER_FILE = 'sw.js';
 
     // ── 隨機背景圖 ──

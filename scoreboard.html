@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <title>計分表</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap');
@@ -24,6 +24,10 @@
       box-sizing: border-box;
     }
 
+    html, body {
+      overscroll-behavior: none;
+    }
+
     body {
       min-height: 100vh;
       min-height: 100dvh;
@@ -35,7 +39,7 @@
         linear-gradient(145deg, var(--bg1), var(--bg2));
       display: flex;
       justify-content: center;
-      padding: calc(64px + env(safe-area-inset-top)) 14px calc(24px + env(safe-area-inset-bottom));
+      padding: calc(64px + env(safe-area-inset-top)) 14px calc(100px + env(safe-area-inset-bottom));
       user-select: none;
     }
 
@@ -82,11 +86,6 @@
     .table-wrap {
       width: 100%;
       overflow-x: auto;
-      border: 1px solid var(--panel-border);
-      border-radius: 16px;
-      background: var(--panel);
-      backdrop-filter: blur(6px);
-      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.3);
     }
 
     .grid {
@@ -225,19 +224,21 @@
       border-color: transparent transparent var(--minus) transparent;
     }
 
-    .sign-toggle {
+    .minus-btn {
       position: absolute;
       top: 3px;
       left: 3px;
-      width: 20px;
-      height: 20px;
+      width: 22px;
+      height: 22px;
       border-radius: 50%;
       border: 1px solid var(--panel-border);
-      background: rgba(0, 0, 0, 0.25);
-      color: var(--text);
-      font-size: 12px;
-      line-height: 18px;
+      background: rgba(0, 0, 0, 0.3);
+      color: var(--minus);
+      font-size: 14px;
+      font-weight: 700;
+      line-height: 20px;
       cursor: pointer;
+      touch-action: manipulation;
     }
 
     .total-row .cell-base {
@@ -246,8 +247,22 @@
       border-bottom: none;
     }
 
+    .bottom-bar {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 15;
+      display: flex;
+      justify-content: center;
+      background: rgba(20, 15, 26, 0.55);
+      backdrop-filter: blur(8px);
+      border-top: 1px solid var(--panel-border);
+      padding: 14px 18px calc(14px + env(safe-area-inset-bottom));
+    }
+
     .row-actions {
-      width: 100%;
+      width: min(640px, 100%);
       display: flex;
       gap: 10px;
     }
@@ -286,12 +301,15 @@
 
   <div class="sheet">
     <h1 class="title">計分表</h1>
-    <p class="hint">單擊格子疊加倍率分數・左上角 ± 切換加減・長按格子歸零</p>
+    <p class="hint">單擊格子加分・左上角「−」按一下扣一次・長按格子歸零</p>
 
     <div class="table-wrap">
       <div class="grid" id="grid"></div>
     </div>
 
+  </div>
+
+  <div class="bottom-bar">
     <div class="row-actions">
       <button class="action-btn" id="add-row-btn" type="button">＋ 新增一列</button>
       <button class="action-btn danger" id="reset-btn" type="button">重新開始</button>
@@ -307,8 +325,18 @@
     function defaultState() {
       return {
         players: ['P1', 'P2'],
-        rows: [{ multiplier: 2, cells: [{ count: 0, sign: 1 }, { count: 0, sign: 1 }] }],
+        rows: [{ multiplier: 2, cells: [{ units: 0 }, { units: 0 }] }],
       };
+    }
+
+    // 相容舊版存檔（count/sign 格式），轉成 units 淨值
+    function normalizeCell(cell) {
+      if (!cell) return { units: 0 };
+      if (typeof cell.units === 'number') return cell;
+      if (typeof cell.count === 'number') {
+        return { units: cell.count * (cell.sign === -1 ? -1 : 1) };
+      }
+      return { units: 0 };
     }
 
     function loadState() {
@@ -317,6 +345,9 @@
         if (!raw) return defaultState();
         const parsed = JSON.parse(raw);
         if (!parsed.players || !parsed.rows) return defaultState();
+        parsed.rows.forEach((row) => {
+          row.cells = row.cells.map(normalizeCell);
+        });
         return parsed;
       } catch (e) {
         return defaultState();
@@ -333,7 +364,7 @@
       return state.rows.reduce((sum, row) => {
         const cell = row.cells[playerIdx];
         if (!cell) return sum;
-        return sum + cell.count * row.multiplier * cell.sign;
+        return sum + cell.units * row.multiplier;
       }, 0);
     }
 
@@ -421,34 +452,45 @@
         bodyRow.appendChild(multCell);
 
         state.players.forEach((_, pIdx) => {
-          if (!row.cells[pIdx]) row.cells[pIdx] = { count: 0, sign: 1 };
+          if (!row.cells[pIdx]) row.cells[pIdx] = { units: 0 };
           const cell = row.cells[pIdx];
 
           const cellEl = document.createElement('div');
           cellEl.className = 'cell-base score-cell';
-          if (cell.sign === -1) cellEl.classList.add('is-minus');
+          if (cell.units * row.multiplier < 0) cellEl.classList.add('is-minus');
 
           const valueEl = document.createElement('div');
           valueEl.className = 'value';
-          valueEl.textContent = cell.count * row.multiplier * cell.sign;
+          valueEl.textContent = cell.units * row.multiplier;
           cellEl.appendChild(valueEl);
 
-          const toggleBtn = document.createElement('button');
-          toggleBtn.className = 'sign-toggle';
-          toggleBtn.textContent = cell.sign === 1 ? '+' : '−';
-          toggleBtn.title = '切換加減';
-          toggleBtn.addEventListener('click', (evt) => {
-            evt.stopPropagation();
-            cell.sign = cell.sign === 1 ? -1 : 1;
-            save();
-            renderGrid();
-          });
-          cellEl.appendChild(toggleBtn);
-
-          attachCellGestures(cellEl, cell, row, () => {
-            valueEl.textContent = cell.count * row.multiplier * cell.sign;
+          const refreshCell = () => {
+            const value = cell.units * row.multiplier;
+            valueEl.textContent = value;
+            cellEl.classList.toggle('is-minus', value < 0);
             renderTotals();
+          };
+
+          const minusBtn = document.createElement('button');
+          minusBtn.className = 'minus-btn';
+          minusBtn.type = 'button';
+          minusBtn.textContent = '−';
+          minusBtn.title = '扣一次';
+          const stopAndPrevent = (evt) => {
+            evt.stopPropagation();
+            evt.preventDefault();
+          };
+          minusBtn.addEventListener('pointerdown', stopAndPrevent);
+          minusBtn.addEventListener('pointerup', stopAndPrevent);
+          minusBtn.addEventListener('click', (evt) => {
+            evt.stopPropagation();
+            cell.units -= 1;
+            refreshCell();
+            save();
           });
+          cellEl.appendChild(minusBtn);
+
+          attachCellGestures(cellEl, cell, refreshCell);
 
           bodyRow.appendChild(cellEl);
         });
@@ -498,7 +540,7 @@
       });
     }
 
-    function attachCellGestures(cellEl, cell, row, onChange) {
+    function attachCellGestures(cellEl, cell, onChange) {
       let pressTimer = null;
       let longPressed = false;
 
@@ -506,7 +548,7 @@
         longPressed = false;
         pressTimer = setTimeout(() => {
           longPressed = true;
-          cell.count = 0;
+          cell.units = 0;
           onChange();
           save();
         }, LONG_PRESS_MS);
@@ -522,7 +564,7 @@
       cellEl.addEventListener('pointerup', () => {
         clearPress();
         if (!longPressed) {
-          cell.count += 1;
+          cell.units += 1;
           onChange();
           save();
         }
@@ -536,7 +578,7 @@
       if (state.players.length >= MAX_PLAYERS) return;
       const idx = state.players.length + 1;
       state.players.push(`P${idx}`);
-      state.rows.forEach((row) => row.cells.push({ count: 0, sign: 1 }));
+      state.rows.forEach((row) => row.cells.push({ units: 0 }));
       save();
       renderGrid();
     }
@@ -552,7 +594,7 @@
     function addRow() {
       state.rows.push({
         multiplier: 2,
-        cells: state.players.map(() => ({ count: 0, sign: 1 })),
+        cells: state.players.map(() => ({ units: 0 })),
       });
       save();
       renderGrid();

@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <title>計時器</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap');
@@ -27,6 +27,10 @@
       box-sizing: border-box;
     }
 
+    html, body {
+      overscroll-behavior: none;
+    }
+
     body {
       min-height: 100vh;
       min-height: 100dvh;
@@ -39,21 +43,36 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: calc(18px + env(safe-area-inset-top)) 18px calc(24px + env(safe-area-inset-bottom));
+      padding: calc(18px + env(safe-area-inset-top)) 18px calc(190px + env(safe-area-inset-bottom));
     }
 
-    .timer-shell {
+    .timer-main {
       width: min(460px, 100%);
-      border: 1px solid var(--panel-border);
-      border-radius: 22px;
-      background: var(--panel);
-      backdrop-filter: blur(6px);
-      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
-      padding: 24px 18px 22px;
       display: flex;
       flex-direction: column;
       align-items: center;
       gap: 16px;
+    }
+
+    .bottom-bar {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 15;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      background: rgba(20, 15, 26, 0.55);
+      backdrop-filter: blur(8px);
+      border-top: 1px solid var(--panel-border);
+      padding: 14px 18px calc(14px + env(safe-area-inset-bottom));
+    }
+
+    .bottom-bar .quick-row,
+    .bottom-bar .custom-row {
+      width: min(460px, 100%);
     }
 
     .title {
@@ -262,10 +281,6 @@
     }
 
     @media (max-width: 420px) {
-      .timer-shell {
-        padding: 20px 14px 18px;
-      }
-
       .title {
         font-size: 24px;
       }
@@ -285,7 +300,7 @@
     </svg>
   </a>
 
-  <main class="timer-shell" id="timer-shell">
+  <main class="timer-main" id="timer-shell">
     <h1 class="title">計時器</h1>
     <p class="hint" id="hint">預設 2 分鐘，點圓形可重新計時</p>
 
@@ -299,7 +314,9 @@
         <div class="tap-text">點一下重新開始</div>
       </div>
     </button>
+  </main>
 
+  <div class="bottom-bar">
     <div class="quick-row" aria-label="快速設定">
       <button class="quick-btn" type="button" data-seconds="30">30 秒</button>
       <button class="quick-btn" type="button" data-seconds="60">60 秒</button>
@@ -310,8 +327,7 @@
       <input id="custom-seconds" class="custom-input" type="number" min="5" max="300" step="1" placeholder="自定秒數（5~300）" inputmode="numeric" aria-label="自定秒數" />
       <button class="go-btn" id="custom-go" type="button">套用</button>
     </div>
-
-  </main>
+  </div>
 
   <script>
     const MIN_SECONDS = 5;

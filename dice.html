@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <title>骰子</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap');
@@ -23,6 +23,10 @@
       box-sizing: border-box;
     }
 
+    html, body {
+      overscroll-behavior: none;
+    }
+
     body {
       min-height: 100vh;
       min-height: 100dvh;
@@ -35,7 +39,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: calc(18px + env(safe-area-inset-top)) 18px calc(24px + env(safe-area-inset-bottom));
+      padding: calc(18px + env(safe-area-inset-top)) 18px calc(150px + env(safe-area-inset-bottom));
     }
 
     .back-btn {
@@ -68,18 +72,37 @@
       outline-offset: 3px;
     }
 
-    .dice-shell {
+    .dice-main {
       width: min(460px, 100%);
-      border: 1px solid var(--panel-border);
-      border-radius: 22px;
-      background: var(--panel);
-      backdrop-filter: blur(6px);
-      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
-      padding: 24px 18px 22px;
       display: flex;
       flex-direction: column;
       align-items: center;
       gap: 18px;
+    }
+
+    .bottom-bar {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 15;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      background: rgba(20, 15, 26, 0.55);
+      backdrop-filter: blur(8px);
+      border-top: 1px solid var(--panel-border);
+      padding: 14px 18px calc(14px + env(safe-area-inset-bottom));
+    }
+
+    .bottom-bar .count-row,
+    .bottom-bar .roll-btn {
+      width: min(460px, 100%);
+    }
+
+    .bottom-bar .count-row {
+      justify-content: center;
     }
 
     .title {
@@ -225,21 +248,23 @@
     </svg>
   </a>
 
-  <main class="dice-shell">
+  <main class="dice-main">
     <h1 class="title">骰子</h1>
 
+    <div class="dice-grid" id="dice-grid"></div>
+
+    <div class="total-line" id="total-line">總點數：--</div>
+  </main>
+
+  <div class="bottom-bar">
     <div class="count-row">
       <button class="count-btn" id="count-minus" type="button" aria-label="減少骰子">−</button>
       <div class="count-display"><span id="count-num">2</span> 顆</div>
       <button class="count-btn" id="count-plus" type="button" aria-label="增加骰子">+</button>
     </div>
 
-    <div class="dice-grid" id="dice-grid"></div>
-
-    <div class="total-line" id="total-line">總點數：--</div>
-
     <button class="roll-btn" id="roll-btn" type="button">擲骰</button>
-  </main>
+  </div>
 
   <script>
     const MIN_DICE = 1;
