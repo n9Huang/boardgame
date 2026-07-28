@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Board Game 桌遊小工具</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap');
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    /* ── 讀取畫面 ── */
+    #loading-screen {
+      position: fixed;
+      inset: 0;
+      background: #111;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      transition: opacity 0.6s ease;
+    }
+
+    #loading-screen.fade-out {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    #loading-screen img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    /* ── 主體 ── */
+    body {
+      min-height: 100vh;
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      background-color: #c9b89a;
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      font-family: 'Noto Sans TC', sans-serif;
+      position: relative;
+    }
+
+    /* 半透明遮罩讓按鈕更清晰 */
+    /* 透明漸層遮罩：左到右 白50% → 白25% → 白50% */
+    body::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to right,
+        rgba(255,255,255,0.70) 0%,
+        rgba(255,255,255,0.20) 50%,
+        rgba(255,255,255,0.70) 100%);
+      pointer-events: none;
+    }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 40px;
+      width: 100%;
+      padding: 20px;
+      padding-top: calc(20px + env(safe-area-inset-top));
+      padding-left: calc(20px + env(safe-area-inset-left));
+      padding-right: calc(20px + env(safe-area-inset-right));
+    }
+
+    /* ── 標題 PNG ── */
+    .title-logo {
+      width: min(500px, 90vw);
+      filter: drop-shadow(2px 4px 8px rgba(0,0,0,0.5));
+    }
+
+    /* ── 工具按鈕列 ── */
+    .tools-row {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .tool-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      text-decoration: none;
+      color: inherit;
+      transition: transform 0.15s ease;
+    }
+
+    .tool-btn:focus-visible {
+      outline: 3px solid rgba(255, 255, 255, 0.9);
+      outline-offset: 4px;
+      border-radius: 10px;
+    }
+
+    .tool-btn:hover {
+      transform: translateY(-4px);
+    }
+
+    .tool-btn:active {
+      transform: translateY(0);
+    }
+
+    .tool-icon {
+      width: 110px;
+      height: 110px;
+      border-radius: 20px;
+      background: linear-gradient(145deg, #2d2d2d 0%, #181818 100%);
+      border: 3px solid rgba(255,255,255,0.38);
+      box-shadow: 0 8px 18px rgba(0,0,0,0.38), inset 0 1px 0 rgba(255,255,255,0.20);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 52px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .tool-btn:hover .tool-icon {
+      border-color: rgba(255,255,255,0.58);
+      box-shadow: 0 10px 20px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.28);
+    }
+
+    .tool-btn.is-disabled,
+    .tool-btn[aria-disabled="true"] {
+      cursor: not-allowed;
+      pointer-events: none;
+      opacity: 1;
+    }
+
+    .tool-btn.is-disabled:hover,
+    .tool-btn[aria-disabled="true"]:hover {
+      transform: none;
+    }
+
+    .tool-btn.is-disabled .tool-icon,
+    .tool-btn[aria-disabled="true"] .tool-icon {
+      background: linear-gradient(145deg, #8f8f8f 0%, #6f6f6f 100%);
+      border-color: rgba(255,255,255,0.5);
+      box-shadow: 0 5px 12px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.35);
+      filter: grayscale(0.25);
+    }
+
+    .tool-btn.is-disabled .tool-label,
+    .tool-btn[aria-disabled="true"] .tool-label {
+      color: #f0f0f0;
+      text-shadow: 1px 1px 2px rgba(0,0,0,0.45);
+      opacity: 0.95;
+    }
+
+    .tool-label {
+      font-size: 18px;
+      font-weight: 700;
+      color: #fff;
+      text-shadow: 1px 1px 3px #000, 0 0 6px rgba(0,0,0,0.6);
+    }
+
+    /* ── 底部連絡我 ── */
+    .footer {
+      position: fixed;
+      bottom: calc(16px + env(safe-area-inset-bottom));
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      min-width: 220px;
+    }
+
+    .version-line {
+      color: #fff;
+      text-shadow: 1px 1px 4px #000;
+      font-size: 13px;
+      letter-spacing: 0.5px;
+      background: rgba(0, 0, 0, 0.24);
+      border: 1px solid rgba(255,255,255,0.32);
+      border-radius: 999px;
+      padding: 4px 10px;
+      backdrop-filter: blur(2px);
+    }
+
+    .footer a {
+      color: #fff;
+      text-decoration: none;
+      font-size: 15px;
+      text-shadow: 1px 1px 4px #000;
+      border-bottom: 1px solid rgba(255,255,255,0.5);
+      padding-bottom: 2px;
+      transition: opacity 0.2s;
+    }
+
+    .footer a:hover {
+      opacity: 0.75;
+    }
+
+    /* ── SVG 圖示 ── */
+    .icon-img {
+      width: 60px;
+      height: 60px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 讀取動畫 -->
+  <div id="loading-screen">
+    <img src="loading.gif" alt="載入中..." />
+  </div>
+
+  <div class="container">
+
+    <!-- 標題 PNG -->
+    <img src="logo.png" alt="Board Game 桌遊小工具" class="title-logo" />
+
+    <!-- 工具按鈕 -->
+    <div class="tools-row">
+
+      <!-- 計時器 -->
+      <a class="tool-btn" href="timer.html">
+        <div class="tool-icon">
+          <svg class="icon-img" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="32" cy="36" r="22" stroke="#1a1a1a" stroke-width="4" fill="none"/>
+            <path d="M32 36 L32 20" stroke="#1a1a1a" stroke-width="4" stroke-linecap="round"/>
+            <path d="M26 8 L38 8" stroke="#1a1a1a" stroke-width="4" stroke-linecap="round"/>
+            <path d="M32 8 L32 14" stroke="#1a1a1a" stroke-width="4" stroke-linecap="round"/>
+            <path d="M50 18 L54 14" stroke="#1a1a1a" stroke-width="3" stroke-linecap="round"/>
+            <circle cx="32" cy="36" r="3" fill="#1a1a1a"/>
+          </svg>
+        </div>
+        <span class="tool-label">計時器</span>
+      </a>
+
+      <!-- 計分表 -->
+      <a class="tool-btn is-disabled" href="scoreboard.html" aria-disabled="true" tabindex="-1">
+        <div class="tool-icon">
+          <svg class="icon-img" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="8" y="8" width="48" height="48" rx="6" stroke="#1a1a1a" stroke-width="4" fill="none"/>
+            <text x="32" y="42" text-anchor="middle" font-family="Bangers,sans-serif"
+                  font-size="26" fill="#1a1a1a" font-weight="bold">2:0</text>
+          </svg>
+        </div>
+        <span class="tool-label">計分表</span>
+      </a>
+
+      <!-- 大老二 -->
+      <a class="tool-btn is-disabled" href="big2.html" aria-disabled="true" tabindex="-1">
+        <div class="tool-icon">
+          <svg class="icon-img" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="6" y="6" width="24" height="24" rx="4" fill="#f0f0f0"/>
+            <line x1="12" y1="18" x2="24" y2="18" stroke="#1a1a1a" stroke-width="3" stroke-linecap="round"/>
+            <line x1="12" y1="12" x2="24" y2="12" stroke="#1a1a1a" stroke-width="3" stroke-linecap="round"/>
+            <line x1="18" y1="12" x2="18" y2="24" stroke="#1a1a1a" stroke-width="3" stroke-linecap="round"/>
+            <rect x="34" y="34" width="24" height="24" rx="4" fill="#f0f0f0"/>
+            <line x1="40" y1="46" x2="52" y2="46" stroke="#1a1a1a" stroke-width="3" stroke-linecap="round"/>
+            <line x1="40" y1="41" x2="52" y2="41" stroke="#1a1a1a" stroke-width="3" stroke-linecap="round"/>
+            <line x1="40" y1="51" x2="52" y2="51" stroke="#1a1a1a" stroke-width="3" stroke-linecap="round"/>
+            <line x1="46" y1="36" x2="46" y2="56" stroke="#1a1a1a" stroke-width="3" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <span class="tool-label">大老二</span>
+      </a>
+
+      <!-- 骰子 -->
+      <a class="tool-btn is-disabled" href="dice.html" aria-disabled="true" tabindex="-1">
+        <div class="tool-icon">
+          <svg class="icon-img" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <!-- 後方骰子 -->
+            <rect x="22" y="16" width="34" height="34" rx="6" fill="#e0e0e0" stroke="#999" stroke-width="2"/>
+            <circle cx="31" cy="25" r="3" fill="#1a1a1a"/>
+            <circle cx="47" cy="25" r="3" fill="#1a1a1a"/>
+            <circle cx="39" cy="33" r="3" fill="#1a1a1a"/>
+            <circle cx="31" cy="41" r="3" fill="#1a1a1a"/>
+            <circle cx="47" cy="41" r="3" fill="#1a1a1a"/>
+            <!-- 前方骰子 -->
+            <rect x="6" y="26" width="30" height="30" rx="6" fill="#f5f5f5" stroke="#777" stroke-width="2"/>
+            <circle cx="16" cy="36" r="3" fill="#1a1a1a"/>
+            <circle cx="26" cy="36" r="3" fill="#1a1a1a"/>
+            <circle cx="21" cy="46" r="3" fill="#1a1a1a"/>
+          </svg>
+        </div>
+        <span class="tool-label">骰子</span>
+      </a>
+
+      <!-- 山中小屋 -->
+      <a class="tool-btn" href="cabin.html">
+        <div class="tool-icon">
+          <svg class="icon-img" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <!-- 小屋輪廓 -->
+            <path d="M8 32 L32 10 L56 32" stroke="#c8a84b" stroke-width="2.5" stroke-linejoin="round"/>
+            <rect x="14" y="32" width="36" height="22" rx="1" fill="#1a1510" stroke="#c8a84b" stroke-width="2"/>
+            <!-- 門 -->
+            <rect x="26" y="42" width="12" height="12" rx="1" fill="#0a0806" stroke="#c8a84b" stroke-width="1.5"/>
+            <!-- 窗 -->
+            <rect x="16" y="36" width="8" height="8" rx="1" fill="#0a0806" stroke="#c8a84b" stroke-width="1.2"/>
+            <rect x="40" y="36" width="8" height="8" rx="1" fill="#0a0806" stroke="#c8a84b" stroke-width="1.2"/>
+            <!-- 月亮 -->
+            <path d="M44 14 C47 11 51 13 50 17 C48 15 45 15 44 14Z" fill="#c8a84b" opacity="0.85"/>
+          </svg>
+        </div>
+        <span class="tool-label">山中小屋</span>
+      </a>
+
+    </div>
+  </div>
+
+  <!-- 底部 -->
+  <footer class="footer">
+    <div class="version-line" id="version-line">版本：--</div>
+    <a href="mailto:contact@example.com">連絡我</a>
+  </footer>
+
+  <script>
+    const APP_VERSION = 'Z7.28.1';
+
+    // ── 隨機背景圖 ──
+    const bgs = ['bg1.jpg', 'bg2.jpg', 'bg3.jpg', 'bg4.jpg'];
+    const chosen = bgs[Math.floor(Math.random() * bgs.length)];
+    document.body.style.backgroundImage = `url('${chosen}')`;
+
+    const versionLine = document.getElementById('version-line');
+    if (versionLine) {
+      // 第一階段先顯示版本，第二階段再接 sw.js 版本比對。
+      versionLine.textContent = `版本：${APP_VERSION}`;
+    }
+
+    document.querySelectorAll('.tool-btn[aria-disabled="true"]').forEach((el) => {
+      el.addEventListener('click', (evt) => {
+        evt.preventDefault();
+      });
+    });
+
+    // ── 讀取動畫：GIF 播放一段時間後淡出 ──
+    window.addEventListener('load', () => {
+      const loading = document.getElementById('loading-screen');
+      // 讓 GIF 至少跑 1.8 秒再淡出
+      setTimeout(() => {
+        loading.classList.add('fade-out');
+        loading.addEventListener('transitionend', () => loading.remove(), { once: true });
+      }, 1800);
+    });
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,940 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>山中小屋 — 事件卡</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;600;700&family=Ma+Shan+Zheng&family=Uncial+Antiqua&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg:         #080810;
+      --card-dark:  #0e0c0a;
+      --border:     #8a6a28;
+      --gold:       #c8a84b;
+      --gold-glow:  rgba(200,168,75,0.35);
+      --text:       #d4c5a9;
+      --muted:      #6e6050;
+      --rule-bg:    #091409;
+      --rule-text:  #7ac87a;
+    }
+
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      min-height: 100vh;
+      min-height: 100dvh;
+      background: var(--bg);
+      background-image:
+        radial-gradient(ellipse at 20% 20%, rgba(80,40,10,0.18) 0%, transparent 60%),
+        radial-gradient(ellipse at 80% 80%, rgba(20,40,20,0.18) 0%, transparent 60%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      font-family: 'Noto Serif TC', serif;
+      color: var(--text);
+      overflow: hidden;
+      padding-top: max(24px, env(safe-area-inset-top));
+      padding-bottom: max(24px, env(safe-area-inset-bottom));
+      user-select: none;
+    }
+
+    /* ── 頂部標題 ── */
+    .page-header {
+      text-align: center;
+      margin-bottom: 24px;
+      width: 100%;
+    }
+    .page-title {
+      font-family: 'Ma Shan Zheng', 'Noto Serif TC', serif;
+      font-size: 36px;
+      font-weight: 400;
+      color: var(--gold);
+      letter-spacing: 12px;
+      text-align: center;
+      text-shadow: 0 0 24px var(--gold-glow), 0 0 60px rgba(200,168,75,0.15);
+      line-height: 1.3;
+    }
+    .page-sub {
+      font-family: 'Uncial Antiqua', serif;
+      font-size: 11px;
+      color: var(--muted);
+      letter-spacing: 4px;
+      margin-top: 6px;
+      text-align: center;
+    }
+
+    /* ── 卡片舞台 ── */
+    .stage {
+      position: relative;
+      width: 300px;
+      height: 430px;
+      flex-shrink: 0;
+    }
+
+    /* ── 卡片包裝 (3D flip) ── */
+    .card-wrap {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      transform-style: preserve-3d;
+      perspective: 1200px;
+      will-change: transform;
+      transition: transform 0.1s ease, box-shadow 0.3s;
+      cursor: grab;
+    }
+    .card-wrap.dragging { cursor: grabbing; transition: none; }
+    .card-wrap.flip-anim {
+      animation: doFlip 0.65s ease forwards;
+    }
+    @keyframes doFlip {
+      0%   { transform: translateY(var(--drag-end,0px)) rotateY(0deg); }
+      45%  { transform: translateY(20px) rotateY(90deg); }
+      55%  { transform: translateY(20px) rotateY(90deg); }
+      100% { transform: translateY(0px) rotateY(0deg); }
+    }
+
+    /* ── 卡片面 ── */
+    .card-face {
+      position: absolute;
+      inset: 0;
+      border-radius: 18px;
+      border: 1.5px solid var(--border);
+      box-shadow: 0 0 30px rgba(0,0,0,0.8), 0 0 8px var(--gold-glow);
+      overflow: hidden;
+    }
+
+    /* ── 背面 ── */
+    #card-back {
+      background: var(--card-dark);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+    }
+    .back-ornament {
+      width: 180px;
+      height: 180px;
+      border: 1px solid var(--border);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 20px var(--gold-glow), inset 0 0 20px rgba(0,0,0,0.5);
+    }
+    .back-ornament svg { width: 120px; height: 120px; opacity: 0.75; }
+    .back-hint {
+      font-size: 13px;
+      color: var(--muted);
+      letter-spacing: 2px;
+      animation: hint-pulse 2s ease-in-out infinite;
+    }
+    @keyframes hint-pulse {
+      0%, 100% { opacity: 0.4; } 50% { opacity: 0.85; }
+    }
+    .back-corner {
+      position: absolute;
+      width: 28px;
+      height: 28px;
+      border-color: var(--border);
+      border-style: solid;
+      opacity: 0.6;
+    }
+    .back-corner.tl { top: 12px; left: 12px; border-width: 1px 0 0 1px; }
+    .back-corner.tr { top: 12px; right: 12px; border-width: 1px 1px 0 0; }
+    .back-corner.bl { bottom: 12px; left: 12px; border-width: 0 0 1px 1px; }
+    .back-corner.br { bottom: 12px; right: 12px; border-width: 0 1px 1px 0; }
+
+    /* ── 正面 ── */
+    #card-front {
+      background: linear-gradient(160deg, #0f0d0b 0%, #0a0c0d 100%);
+      display: none;
+      flex-direction: column;
+      padding: 22px 18px 18px;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border) transparent;
+    }
+    #card-front.visible { display: flex; }
+
+    .card-type-label {
+      font-size: 10px;
+      letter-spacing: 3px;
+      color: var(--muted);
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+
+    .card-title {
+      font-family: 'Ma Shan Zheng', 'Noto Serif TC', serif;
+      font-size: 28px;
+      font-weight: 400;
+      color: var(--gold);
+      text-shadow: 0 0 16px var(--gold-glow), 0 0 40px rgba(200,168,75,0.12);
+      line-height: 1.4;
+      min-height: 1.4em;
+      letter-spacing: 6px;
+      margin-bottom: 14px;
+    }
+
+    .divider {
+      width: 100%;
+      height: 1px;
+      background: linear-gradient(to right, transparent, var(--border), transparent);
+      margin-bottom: 14px;
+      flex-shrink: 0;
+    }
+
+    .card-story {
+      font-size: 14px;
+      line-height: 1.8;
+      color: var(--text);
+      white-space: pre-wrap;
+      flex: 1;
+      min-height: 40px;
+    }
+
+    .rule-section {
+      display: none;
+      margin-top: 14px;
+      padding: 12px 14px;
+      background: var(--rule-bg);
+      border: 1px solid rgba(122,200,122,0.25);
+      border-radius: 10px;
+      animation: fadeUp 0.4s ease;
+    }
+    .rule-section.visible { display: block; }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .rule-label {
+      font-size: 10px;
+      letter-spacing: 3px;
+      color: rgba(122,200,122,0.6);
+      margin-bottom: 8px;
+    }
+    .rule-text {
+      font-size: 13px;
+      line-height: 1.8;
+      color: var(--rule-text);
+      white-space: pre-wrap;
+    }
+
+    .tap-hint {
+      text-align: center;
+      font-size: 11px;
+      color: var(--muted);
+      letter-spacing: 2px;
+      margin-top: 12px;
+      animation: hint-pulse 2s ease-in-out infinite;
+      flex-shrink: 0;
+    }
+    .tap-hint.hidden { display: none; }
+
+    /* ── 下方按鈕 ── */
+    .btn-row {
+      margin-top: 20px;
+      display: flex;
+      gap: 12px;
+    }
+    .btn {
+      padding: 10px 24px;
+      border-radius: 99px;
+      border: 1px solid var(--border);
+      background: rgba(200,168,75,0.08);
+      color: var(--gold);
+      font-size: 14px;
+      font-family: inherit;
+      letter-spacing: 2px;
+      cursor: pointer;
+      transition: background 0.2s, box-shadow 0.2s;
+    }
+    .btn:active {
+      background: rgba(200,168,75,0.18);
+      box-shadow: 0 0 10px var(--gold-glow);
+    }
+
+    /* ── 計數 ── */
+    .counter {
+      margin-top: 12px;
+      font-size: 11px;
+      color: var(--muted);
+      letter-spacing: 2px;
+    }
+
+    /* ── 語音按鈕 ── */
+    .tts-btn {
+      position: absolute;
+      top: 10px;
+      right: 14px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 4px;
+      opacity: 0.5;
+      transition: opacity 0.2s;
+      display: none;
+    }
+    .tts-btn.visible { display: block; }
+    .tts-btn:hover { opacity: 0.9; }
+    .tts-btn svg { width: 18px; height: 18px; fill: var(--gold); }
+
+    /* ── 設定齒輪按鈕 ── */
+    .settings-toggle {
+      position: fixed;
+      top: max(14px, env(safe-area-inset-top));
+      right: max(14px, env(safe-area-inset-right));
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 50%;
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 200;
+      opacity: 0.6;
+      transition: opacity 0.2s, transform 0.3s;
+    }
+    .settings-toggle:hover { opacity: 1; }
+    .settings-toggle.open { transform: rotate(60deg); }
+    .settings-toggle svg { width: 18px; height: 18px; fill: var(--gold); }
+
+    /* ── 設定面板 ── */
+    .settings-panel {
+      position: fixed;
+      top: max(60px, calc(env(safe-area-inset-top) + 46px));
+      right: max(10px, env(safe-area-inset-right));
+      width: 240px;
+      background: #0e0c0a;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 18px 16px;
+      z-index: 199;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.7);
+      display: none;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .settings-panel.open { display: flex; }
+    .settings-title {
+      font-size: 11px;
+      letter-spacing: 3px;
+      color: var(--gold);
+      text-align: center;
+      margin-bottom: 2px;
+    }
+    .setting-row {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    .setting-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: var(--text);
+      letter-spacing: 1px;
+    }
+    .setting-label span { color: var(--gold); min-width: 30px; text-align: right; }
+    input[type=range] {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 4px;
+      border-radius: 2px;
+      background: #2a2015;
+      outline: none;
+      cursor: pointer;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: var(--gold);
+      box-shadow: 0 0 6px var(--gold-glow);
+    }
+    .voice-select {
+      width: 100%;
+      background: #1a1510;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      font-size: 12px;
+      font-family: inherit;
+      padding: 6px 8px;
+      cursor: pointer;
+      outline: none;
+    }
+    .voice-select option { background: #1a1510; }
+    .settings-divider {
+      height: 1px;
+      background: linear-gradient(to right, transparent, var(--border), transparent);
+    }
+    .test-btn {
+      padding: 7px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: rgba(200,168,75,0.07);
+      color: var(--gold);
+      font-size: 12px;
+      font-family: inherit;
+      cursor: pointer;
+      letter-spacing: 2px;
+      transition: background 0.2s;
+    }
+    .test-btn:active { background: rgba(200,168,75,0.18); }
+  </style>
+</head>
+<body>
+
+  <!-- 設定齒輪 -->
+  <button class="settings-toggle" id="settingsToggle" title="語音設定">
+    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+      <path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.488.488 0 0 0-.59-.22l-2.39.96a7.02 7.02 0 0 0-1.62-.94l-.36-2.54a.484.484 0 0 0-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96a.477.477 0 0 0-.59.22L2.74 8.87a.47.47 0 0 0 .12.61l2.03 1.58c-.05.3-.07.63-.07.94s.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.37 1.04.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.57 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32a.47.47 0 0 0-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/>
+    </svg>
+  </button>
+
+  <!-- 設定面板 -->
+  <div class="settings-panel" id="settingsPanel">
+    <div class="settings-title">⟡ 語音設定 ⟡</div>
+    <div class="settings-divider"></div>
+
+    <div class="setting-row">
+      <div class="setting-label">語速 <span id="rateVal">0.9</span></div>
+      <input type="range" id="rateSlider" min="0.5" max="2" step="0.05" value="0.9" />
+    </div>
+
+    <div class="setting-row">
+      <div class="setting-label">音調 <span id="pitchVal">0.85</span></div>
+      <input type="range" id="pitchSlider" min="0.5" max="2" step="0.05" value="0.85" />
+    </div>
+
+    <div class="setting-row">
+      <div class="setting-label">音量 <span id="volVal">1.0</span></div>
+      <input type="range" id="volSlider" min="0" max="1" step="0.05" value="1" />
+    </div>
+
+    <div class="settings-divider"></div>
+
+    <div class="setting-row">
+      <div class="setting-label">語音角色</div>
+      <select class="voice-select" id="voiceSelect"></select>
+    </div>
+
+    <button class="test-btn" id="testBtn">試聽</button>
+  </div>
+
+  <div class="page-header">
+    <div class="page-title">山中小屋</div>
+    <div class="page-sub">事件卡 · HAUNTING CARDS</div>
+  </div>
+
+  <div class="stage">
+    <div class="card-wrap" id="cardWrap">
+
+      <!-- 背面 -->
+      <div class="card-face" id="card-back">
+        <div class="back-corner tl"></div>
+        <div class="back-corner tr"></div>
+        <div class="back-corner bl"></div>
+        <div class="back-corner br"></div>
+        <div class="back-ornament">
+          <svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="60" cy="60" r="50" stroke="#c8a84b" stroke-width="1" stroke-dasharray="4 3"/>
+            <circle cx="60" cy="60" r="36" stroke="#c8a84b" stroke-width="0.8"/>
+            <path d="M60 24 L64 52 L60 56 L56 52 Z" fill="#c8a84b" opacity="0.7"/>
+            <path d="M60 96 L64 68 L60 64 L56 68 Z" fill="#c8a84b" opacity="0.7"/>
+            <path d="M24 60 L52 56 L56 60 L52 64 Z" fill="#c8a84b" opacity="0.7"/>
+            <path d="M96 60 L68 56 L64 60 L68 64 Z" fill="#c8a84b" opacity="0.7"/>
+            <circle cx="60" cy="60" r="6" stroke="#c8a84b" stroke-width="1.5" fill="none"/>
+            <line x1="60" y1="10" x2="60" y2="20" stroke="#c8a84b" stroke-width="0.8"/>
+            <line x1="60" y1="100" x2="60" y2="110" stroke="#c8a84b" stroke-width="0.8"/>
+            <line x1="10" y1="60" x2="20" y2="60" stroke="#c8a84b" stroke-width="0.8"/>
+            <line x1="100" y1="60" x2="110" y2="60" stroke="#c8a84b" stroke-width="0.8"/>
+          </svg>
+        </div>
+        <div class="back-hint">↓ 向下拖曳翻牌</div>
+      </div>
+
+      <!-- 正面 -->
+      <div class="card-face" id="card-front">
+        <button class="tts-btn" id="ttsBtn" title="重播語音">
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3A4.5 4.5 0 0 0 14 7.97v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/>
+          </svg>
+        </button>
+        <div class="card-type-label">— 事件 —</div>
+        <div class="card-title" id="cardTitle"></div>
+        <div class="divider"></div>
+        <div class="card-story" id="cardStory"></div>
+        <div class="tap-hint hidden" id="tapHint">點擊卡片查看結果</div>
+        <div class="rule-section" id="ruleSection">
+          <div class="rule-label">— 規則 —</div>
+          <div class="rule-text" id="ruleText"></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn" id="nextBtn">下一張</button>
+  </div>
+  <div class="counter" id="counter"></div>
+
+<script>
+// ── 卡片資料 ──
+const CARDS = [
+  { title:"暗夜景像", story:"你看見一對穿著婚禮服的鬼魂，靜靜地漫步著⋯\n\n進行知識檢定：", rule:"(5+) 你認出他們是這房子以前的居民，你叫出他們的名字，而他們轉向你，低聲告訴你這房子的秘密。獲得 1 級知識。\n\n(0-4) 你恐懼地後退，不敢直視。" },
+  { title:"血腥幻象", story:"全是鮮血！血從天花板滴落，流下牆壁，淹過傢俱，直到你的鞋子⋯突然間！消失了⋯\n\n進行神志檢定：", rule:"(4+) 這樣也嚇不倒你！獲得 1 級神志。\n\n(2-3) 失去 1 級神志。\n\n(0-1) 你神志不清，突然攻擊 1 名跟你同房或隔壁間（有門相通）的人或怪物（可任選，若無人則結束此事）。" },
+  { title:"命中注定", story:"你跌坐在地上，腦中出現了屬於未來的影像。", rule:"擲 4 顆骰子並記錄結果。在未來某次你需要擲骰時，可直接以該數字取代擲骰動作 1 次。" },
+  { title:"墳土飛揚", story:"房間覆蓋著一層厚厚的塵土，你弄得滿身是灰，還因吸入肺中而不斷咳嗽著。\n\n進行力量檢定：", rule:"(4+) 你抖落塵土，獲得 1 級力量。\n\n(0-3) 不太對勁！保留此牌。每當你的回合開始時，受到 1 顆骰的物理傷害，直到你因一張物品牌而讓任一屬性升級，或你在指定地點結束回合才可丟棄。" },
+  { title:"秘密樓梯", story:"恐怖的喀啦巨響迴盪在你周圍，你發現了一道秘密樓梯。", rule:"在該房放置一枚「秘密樓梯」方形標記，並任選一間其他樓層的房間，也放置一枚相同標記。" },
+  { title:"鎖著的保險箱", story:"肖像畫後方的牆上，有個保險箱。這恐怕有陷阱唷⋯\n\n在該房放置一枚「保險箱」方形標記。以知識檢定嘗試打開保險箱：", rule:"(5+) 成功打開，抽 2 張物品牌，並移除標記。\n\n(2-4) 失敗，受到 1 顆骰的物理傷害。\n\n(0-1) 失敗，受到 2 顆骰的物理傷害。" },
+  { title:"尖叫聲", story:"某個東西在你的耳邊發出震耳欲聾的尖叫聲！\n\n進行神志檢定：", rule:"(4+) 你轉過頭，沒看見任何人，但你的意志更堅強了。獲得 1 級神志。\n\n(0-3) 受到 1 點精神傷害。" },
+  { title:"憤怒的球體", story:"一顆冒煙的灰球在房間裡彈來彈去，擊中了你！\n\n進行速度檢定：", rule:"(4+) 你接住了球！它變冷並停止冒煙。獲得 1 級速度。\n\n(1-3) 你被球擊中多次。受到 1 點物理傷害。\n\n(0) 球擊中了你的要害！受到 2 點物理傷害。" },
+  { title:"腐爛的食物", story:"這裡的東西看起來很好吃，但吃進去後你才發現那是腐爛的人肉！\n\n進行神志檢定：", rule:"(5+) 你及時吐掉，甚至還在腐爛物中找到了一些有用的東西。獲得 1 級知識。\n\n(0-4) 你感到噁心想吐。失去 1 級力量。" },
+  { title:"蜘蛛", story:"數以千計的細小蜘蛛爬過你的身體，鑽進你的衣服裡！\n\n進行速度檢定：", rule:"(4+) 你迅速拍掉蜘蛛。獲得 1 級神志。\n\n(1-3) 蜘蛛咬了你。受到 1 點物理傷害。\n\n(0) 蜘蛛群淹沒了你！受到 2 點物理傷害。" },
+  { title:"電話響了", story:"儘管沒有插電，電話還是響了。你接起後聽到一陣低語⋯\n\n進行神志檢定：", rule:"(4+) 那是來自彼岸的建議。獲得 1 級知識。\n\n(0-3) 那低語令你感到寒冷。失去 1 級神志。" },
+  { title:"牆上的影像", story:"一道陰影穿過牆壁，即便沒有任何東西擋住光源⋯\n\n進行神志檢定：", rule:"(4+) 你了解到這只不過是光影的惡作劇。獲得 1 級神志。\n\n(0-3) 這道陰影深深觸動了你的內心恐懼。失去 1 級神志。" },
+  { title:"霧氣繚繞", story:"一股寒冷的白霧從地板上升起，纏繞著你的腳踝⋯\n\n進行知識檢定：", rule:"(4+) 你認出這是一種超自然現象。獲得 1 級知識。\n\n(0-3) 霧氣使你迷失了方向。失去 1 級速度。" },
+  { title:"鏡中影像", story:"你經過一面鏡子，看見鏡中的自己正在腐爛⋯\n\n進行神志檢定：", rule:"(4+) 你閉上眼保持冷靜。獲得 1 級神志。\n\n(0-3) 恐怖的景象揮之不去。失去 1 級神志。" },
+  { title:"扭曲的玩偶", story:"你在角落發現一個扭曲的玩偶，它的眼睛似乎在跟著你轉動。", rule:"進行神志檢定：\n\n(4+) 你發現它只是個普通的玩具。獲得 1 級神志。\n\n(0-3) 玩偶對你露出了詭異的微笑。受到 1 點精神傷害。" },
+  { title:"地板碎裂", story:"地板突然在你腳下碎裂！\n\n進行速度檢定：", rule:"(5+) 你及時跳到了安全的地方。\n\n(0-4) 你掉進了下層的房間，受到 1 點物理傷害。若下層沒有房間，則改為受到 2 點物理傷害並留在原處。" },
+  { title:"古老的肖像", story:"牆上的肖像畫突然開始流血，雙眼死死盯著你。\n\n進行神志檢定：", rule:"(4+) 你冷靜地觀察這幅畫。獲得 1 級知識。\n\n(0-3) 肖像畫的目光令你膽戰心驚。受到 1 點精神傷害。" },
+  { title:"奇怪的氣味", story:"房間裡充斥著一股難聞的腐爛味，讓你感到頭暈目眩。\n\n進行力量檢定：", rule:"(4+) 你屏住呼吸，快速通過。獲得 1 級力量。\n\n(0-3) 毒氣侵入了你的體內。失去 1 級力量。" },
+  { title:"燃燒的蠟燭", story:"房間裡的蠟燭突然自動點燃，火焰呈現詭異的綠色。\n\n進行知識檢定：", rule:"(4+) 你認出這是一種儀式。獲得 1 級知識。\n\n(0-3) 綠色的火焰讓你感到一陣寒意。失去 1 級神志。" },
+  { title:"沉重的大門", story:"一扇沉重的石門擋住了你的去路。\n\n進行力量檢定：", rule:"(5+) 你推開了大門。獲得 1 級力量。\n\n(0-4) 你無法撼動它分毫。若你想通過，必須支付 2 點移動點數。" },
+  { title:"神祕的音樂", story:"遠處傳來陣陣空靈的琴聲，誘惑著你靠近。\n\n進行神志檢定：", rule:"(4+) 你抵抗了誘惑。獲得 1 級神志。\n\n(0-3) 你的身體不由自主地向聲源移動。下回合你的移動路徑由你左手邊的玩家決定。" },
+  { title:"燃燒的記憶", story:"你觸摸了一件古董，一段痛苦的記憶湧入腦海。\n\n進行神志檢定：", rule:"(4+) 你克服了痛苦。獲得 1 級神志。\n\n(0-3) 記憶的殘片灼傷了你的靈魂。受到 1 點精神傷害。" },
+  { title:"隱形的絆索", story:"走廊上似乎有什麼東西絆倒了你。\n\n進行速度檢定：", rule:"(4+) 你優雅地翻滾著地。獲得 1 級速度。\n\n(0-3) 你重重地摔在地上。受到 1 點物理傷害。" },
+  { title:"腐朽的樑柱", story:"天花板的一根樑柱突然斷裂塌下！\n\n進行速度檢定：", rule:"(5+) 你閃開了。獲得 1 級速度。\n\n(0-4) 樑柱砸中了你。受到 2 點物理傷害。" },
+  { title:"冷風過境", story:"一股極其冰冷的寒風吹過，你的骨頭都在打顫。\n\n進行力量檢定：", rule:"(4+) 你強忍住寒冷。獲得 1 級力量。\n\n(0-3) 寒氣侵蝕了你的體力。失去 1 級速度。" },
+  { title:"牆上的塗鴉", story:"牆上用鮮血寫著一段古老的咒語。\n\n進行知識檢定：", rule:"(5+) 你解讀了咒語。獲得 1 級知識。\n\n(0-4) 這些文字讓你頭痛欲裂。受到 1 點精神傷害。" },
+  { title:"閃爍的燈光", story:"燈光不停地閃爍，黑暗中似乎有東西在逼近。\n\n進行神志檢定：", rule:"(4+) 你保持冷靜。獲得 1 級神志。\n\n(0-3) 恐懼讓你退縮。失去 1 級速度。" },
+  { title:"破碎的鏡子", story:"鏡子突然炸裂，碎片四處飛濺！\n\n進行速度檢定：", rule:"(4+) 你躲過了碎片。獲得 1 級速度。\n\n(0-3) 被碎片劃傷。受到 1 點物理傷害。" },
+  { title:"沉重的枷鎖", story:"無形的枷鎖突然束縛住你的雙腿。\n\n進行力量檢定：", rule:"(4+) 你掙脫了枷鎖。獲得 1 級力量。\n\n(0-3) 枷鎖限制了你的行動。下回合你的移動距離減半。" },
+  { title:"古老的書籍", story:"你發現一本沾滿灰塵的書籍，記載著宅邸的歷史。\n\n進行知識檢定：", rule:"(4+) 你獲得了寶貴的資訊。獲得 1 級知識。\n\n(0-3) 書籍中隱藏的邪氣讓你感到不適。失去 1 級神志。" },
+  { title:"陷阱地板", story:"地板上的機關被觸發，利箭射出！\n\n進行速度檢定：", rule:"(5+) 你閃過了所有利箭。\n\n(0-4) 箭矢擦傷了你。受到 1 點物理傷害。" },
+  { title:"陰影中的手", story:"無數隻黑色的手從陰影中伸出，試圖抓住你。\n\n進行力量檢定：", rule:"(4+) 你擺脫了抓捕。獲得 1 級力量。\n\n(0-3) 你被拖入了陰影。本回合結束你的行動。" },
+  { title:"惡魔的誘惑", story:"一個低沉的聲音在承諾給你無限的力量，只要你獻祭同伴。\n\n進行神志檢定：", rule:"(5+) 你拒絕了誘惑。獲得 1 級神志。\n\n(0-4) 你的心智動搖了。失去 1 級神志。" },
+  { title:"時空裂縫", story:"房間的空間發生了扭曲，你似乎看到了另一個時空。\n\n進行知識檢定：", rule:"(5+) 你穩定了自己的意識。獲得 1 級知識。\n\n(0-4) 空間的混亂讓你感到噁心。失去 1 級速度。" },
+  { title:"枯萎的植物", story:"房間裡的植物在你靠近時迅速乾枯粉碎。\n\n進行力量檢定：", rule:"(4+) 你吸收了殘留的生命力。獲得 1 級力量。\n\n(0-3) 生命力的流失讓你感到虛弱。失去 1 級力量。" },
+  { title:"血紅的月光", story:"窗外射進來的月光變成了詭異的紅色。\n\n所有人進行神志檢定：", rule:"(4+) 你們不受影響。\n\n(0-3) 月光激發了內心的狂躁。所有失敗者失去 1 級神志。" },
+  { title:"鏽蝕的機關", story:"你試圖操作一個生鏽的控制桿。\n\n進行力量檢定：", rule:"(4+) 你成功操作了它。獲得 1 級力量。\n\n(0-3) 你的手被鐵鏽劃破。受到 1 點物理傷害。" },
+  { title:"神祕的祭壇", story:"一座刻滿奇異符文的祭壇散發著微弱的光芒。\n\n進行知識檢定：", rule:"(5+) 你了解了祭壇的用途。獲得 1 級知識。\n\n(0-4) 祭壇的力量反噬了你。受到 1 點精神傷害。" },
+  { title:"崩塌的牆壁", story:"牆壁突然倒塌，塵土飛揚。\n\n進行速度檢定：", rule:"(4+) 你及時躲開。獲得 1 級速度。\n\n(0-3) 被石塊砸中。受到 1 點物理傷害。" },
+  { title:"虛假的幻象", story:"你看到同伴變成了恐怖的怪物。\n\n進行神志檢定：", rule:"(4+) 你識破了幻象。獲得 1 級神志。\n\n(0-3) 你陷入了恐慌。下回合你不能進入有其他玩家的房間。" },
+  { title:"冰冷的觸碰", story:"一隻冰冷的手突然搭在你的肩上。\n\n進行速度檢定：", rule:"(4+) 你立刻轉身反擊。獲得 1 級速度。\n\n(0-3) 你的身體凍僵了。失去 1 級速度。" },
+  { title:"詛咒的硬幣", story:"你在地上撿起一枚閃閃發光的硬幣。\n\n進行知識檢定：", rule:"(4+) 你認出這是詛咒之物並丟棄。獲得 1 級知識。\n\n(0-3) 硬幣消失在你的掌心。失去 1 級神志。" },
+  { title:"迴盪的腳步聲", story:"走廊盡頭傳來沉重的腳步聲，但那裡什麼都沒有。\n\n進行神志檢定：", rule:"(4+) 你保持警惕。獲得 1 級神志。\n\n(0-3) 無形的壓力讓你崩潰。受到 1 點精神傷害。" },
+  { title:"腐蝕的地面", story:"地面流出強酸，正在溶解你的鞋底！\n\n進行速度檢定：", rule:"(5+) 你輕巧地避開了酸液。獲得 1 級速度。\n\n(0-4) 酸液灼傷了你的皮膚。受到 1 點物理傷害。" },
+];
+
+// ── 狀態 ──
+let deck = [];        // 剩餘牌堆 (index)
+let currentCard = null;
+let state = 'back';   // 'back' | 'story' | 'rule'
+let typewriterTimer = null;
+let ttsUtterance = null;
+
+// ── 元素 ──
+const cardWrap   = document.getElementById('cardWrap');
+const cardBack   = document.getElementById('card-back');
+const cardFront  = document.getElementById('card-front');
+const cardTitle  = document.getElementById('cardTitle');
+const cardStory  = document.getElementById('cardStory');
+const ruleSection= document.getElementById('ruleSection');
+const ruleText   = document.getElementById('ruleText');
+const tapHint    = document.getElementById('tapHint');
+const ttsBtn     = document.getElementById('ttsBtn');
+const nextBtn    = document.getElementById('nextBtn');
+const counter    = document.getElementById('counter');
+
+// ── 洗牌 ──
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+function resetDeck() {
+  deck = shuffle([...Array(CARDS.length).keys()]);
+}
+
+function updateCounter() {
+  counter.textContent = `剩餘 ${deck.length} / ${CARDS.length} 張`;
+}
+
+// ── 打字機效果 ──
+function typewrite(el, text, speed, onDone) {
+  if (typewriterTimer) clearInterval(typewriterTimer);
+  el.textContent = '';
+  let i = 0;
+  typewriterTimer = setInterval(() => {
+    el.textContent += text[i];
+    i++;
+    if (i >= text.length) {
+      clearInterval(typewriterTimer);
+      typewriterTimer = null;
+      if (onDone) onDone();
+    }
+  }, speed);
+}
+
+// ── TTS 設定 ──
+let ttsRate  = 0.9;
+let ttsPitch = 0.85;
+let ttsVol   = 1.0;
+let ttsVoice = null;
+
+function speak(text, onDone) {
+  if (!window.speechSynthesis) { if (onDone) onDone(); return; }
+  window.speechSynthesis.cancel();
+
+  // ── 文字預處理，讓語音更自然 ──
+  const cleaned = preprocessTTS(text);
+
+  // 依停頓符號分段，每段之間加入停頓
+  const segments = splitSegments(cleaned);
+  if (!segments.length) { if (onDone) onDone(); return; }
+
+  let idx = 0;
+  function speakNext() {
+    if (idx >= segments.length) { if (onDone) onDone(); return; }
+    const { txt, pause } = segments[idx++];
+    if (!txt) { setTimeout(speakNext, pause); return; }
+
+    const utt = new SpeechSynthesisUtterance(txt);
+    utt.lang   = 'zh-TW';
+    utt.rate   = ttsRate;
+    utt.pitch  = ttsPitch;
+    utt.volume = ttsVol;
+    if (ttsVoice) utt.voice = ttsVoice;
+    utt.onend = () => setTimeout(speakNext, pause);
+    utt.onerror = () => setTimeout(speakNext, pause);
+    ttsUtterance = utt;
+    window.speechSynthesis.speak(utt);
+  }
+  speakNext();
+}
+
+// ── 文字清理：讓 TTS 念起來更自然 ──
+function preprocessTTS(text) {
+  return text
+    .replace(/⋯+/g, '……')            // 標準化省略號
+    .replace(/\((\d+)\+\)/g, '')      // 移除骰子判定 (5+) 等符號
+    .replace(/\((\d+)-(\d+)\)/g, '')  // 移除 (0-4) 等範圍符號
+    .replace(/\n+/g, '，')            // 換行轉逗號停頓
+    .replace(/[「」『』【】〔〕]/g, '') // 移除書名號干擾
+    .replace(/，+/g, '，')            // 合併多餘逗號
+    .trim();
+}
+
+// ── 依標點分段，附帶停頓毫秒 ──
+function splitSegments(text) {
+  const segs = [];
+  // 用正規表達式切在句號、驚嘆號、問號、省略號、逗號後
+  const parts = text.split(/(。|！|？|……|，)/);
+  let buf = '';
+  for (let i = 0; i < parts.length; i++) {
+    const p = parts[i];
+    if (!p) continue;
+    if (/^(。|！|？|……|，)$/.test(p)) {
+      buf += p;
+      let pause = 120;
+      if (/[。！？]/.test(p)) pause = 480;
+      else if (/……/.test(p))  pause = 680;
+      else if (/，/.test(p))  pause = 160;
+      if (buf.replace(/[。！？……，]/g, '').trim()) {
+        segs.push({ txt: buf.trim(), pause });
+      }
+      buf = '';
+    } else {
+      buf += p;
+    }
+  }
+  if (buf.trim()) segs.push({ txt: buf.trim(), pause: 0 });
+  return segs;
+}
+
+function replayTTS() {
+  if (!currentCard) return;
+  speak(currentCard.title + '。' + currentCard.story);
+}
+
+// ── 語音設定面板 ──
+const settingsToggle = document.getElementById('settingsToggle');
+const settingsPanel  = document.getElementById('settingsPanel');
+const rateSlider  = document.getElementById('rateSlider');
+const pitchSlider = document.getElementById('pitchSlider');
+const volSlider   = document.getElementById('volSlider');
+const rateVal     = document.getElementById('rateVal');
+const pitchVal    = document.getElementById('pitchVal');
+const volVal      = document.getElementById('volVal');
+const voiceSelect = document.getElementById('voiceSelect');
+const testBtn     = document.getElementById('testBtn');
+
+settingsToggle.addEventListener('click', () => {
+  const open = settingsPanel.classList.toggle('open');
+  settingsToggle.classList.toggle('open', open);
+});
+
+// 關閉面板（點外部）
+document.addEventListener('click', e => {
+  if (!settingsPanel.contains(e.target) && e.target !== settingsToggle) {
+    settingsPanel.classList.remove('open');
+    settingsToggle.classList.remove('open');
+  }
+});
+
+rateSlider.addEventListener('input', () => {
+  ttsRate = parseFloat(rateSlider.value);
+  rateVal.textContent = ttsRate.toFixed(2);
+});
+pitchSlider.addEventListener('input', () => {
+  ttsPitch = parseFloat(pitchSlider.value);
+  pitchVal.textContent = ttsPitch.toFixed(2);
+});
+volSlider.addEventListener('input', () => {
+  ttsVol = parseFloat(volSlider.value);
+  volVal.textContent = ttsVol.toFixed(2);
+});
+voiceSelect.addEventListener('change', () => {
+  const voices = window.speechSynthesis.getVoices();
+  ttsVoice = voices.find(v => v.name === voiceSelect.value) || null;
+});
+testBtn.addEventListener('click', e => {
+  e.stopPropagation();
+  speak('山中小屋，事件卡語音測試。');
+});
+
+// 載入語音清單
+function loadVoices() {
+  const voices = window.speechSynthesis.getVoices();
+  if (!voices.length) return;
+  voiceSelect.innerHTML = '';
+  // 優先列中文語音，其次全部
+  const zhVoices = voices.filter(v => v.lang.startsWith('zh'));
+  const list = zhVoices.length ? zhVoices : voices;
+  list.forEach(v => {
+    const opt = document.createElement('option');
+    opt.value = v.name;
+    opt.textContent = v.name.length > 22 ? v.name.slice(0,22)+'…' : v.name;
+    voiceSelect.appendChild(opt);
+  });
+  // 預設選第一個
+  ttsVoice = list[0] || null;
+}
+window.speechSynthesis.onvoiceschanged = loadVoices;
+loadVoices();
+
+// ── 抽卡音效（Web Audio API 合成）──
+function playDrawSound() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+
+    // 低沉的翻牌摩擦聲 —— 噪音濾波
+    const bufferSize = ctx.sampleRate * 0.18;
+    const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) data[i] = (Math.random() * 2 - 1);
+
+    const noise = ctx.createBufferSource();
+    noise.buffer = buffer;
+
+    const noiseFilter = ctx.createBiquadFilter();
+    noiseFilter.type = 'bandpass';
+    noiseFilter.frequency.setValueAtTime(320, ctx.currentTime);
+    noiseFilter.frequency.linearRampToValueAtTime(80, ctx.currentTime + 0.18);
+    noiseFilter.Q.value = 1.2;
+
+    const noiseGain = ctx.createGain();
+    noiseGain.gain.setValueAtTime(0.55, ctx.currentTime);
+    noiseGain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.18);
+
+    noise.connect(noiseFilter);
+    noiseFilter.connect(noiseGain);
+    noiseGain.connect(ctx.destination);
+    noise.start();
+
+    // 低沉神秘音調
+    const osc = ctx.createOscillator();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(110, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(55, ctx.currentTime + 0.5);
+
+    const oscGain = ctx.createGain();
+    oscGain.gain.setValueAtTime(0, ctx.currentTime);
+    oscGain.gain.linearRampToValueAtTime(0.3, ctx.currentTime + 0.05);
+    oscGain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.5);
+
+    osc.connect(oscGain);
+    oscGain.connect(ctx.destination);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.5);
+
+    // 微弱高頻泛音（神秘感）
+    const osc2 = ctx.createOscillator();
+    osc2.type = 'sine';
+    osc2.frequency.setValueAtTime(440, ctx.currentTime);
+    osc2.frequency.exponentialRampToValueAtTime(220, ctx.currentTime + 0.4);
+
+    const osc2Gain = ctx.createGain();
+    osc2Gain.gain.setValueAtTime(0.08, ctx.currentTime);
+    osc2Gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.4);
+
+    osc2.connect(osc2Gain);
+    osc2Gain.connect(ctx.destination);
+    osc2.start();
+    osc2.stop(ctx.currentTime + 0.4);
+
+  } catch(e) { /* 瀏覽器不支援時靜默略過 */ }
+}
+
+// ── 顯示卡片正面 ──
+function revealCard() {
+  if (deck.length === 0) resetDeck();
+  const idx = deck.pop();
+  currentCard = CARDS[idx];
+  updateCounter();
+  state = 'story';
+
+  // 切換面
+  cardBack.style.display = 'none';
+  cardFront.classList.add('visible');
+  ruleSection.classList.remove('visible');
+  tapHint.classList.add('hidden');
+  cardTitle.textContent = '';
+  cardStory.textContent = '';
+  ruleText.textContent = '';
+  ttsBtn.classList.add('visible');
+
+  // 先打 title + 說 title，然後打 story + 說 story
+  typewrite(cardTitle, currentCard.title, 80, () => {
+    speak(currentCard.title, () => {
+      typewrite(cardStory, currentCard.story, 35, () => {
+        speak(currentCard.story, () => {
+          tapHint.classList.remove('hidden');
+        });
+      });
+    });
+  });
+}
+
+// ── 顯示規則 ──
+function showRule() {
+  if (state !== 'story') return;
+  state = 'rule';
+  tapHint.classList.add('hidden');
+  ruleText.textContent = '';
+  ruleSection.classList.add('visible');
+  typewrite(ruleText, currentCard.rule, 28);
+}
+
+// ── 重置為背面 (下一張) ──
+function resetToBack() {
+  if (window.speechSynthesis) window.speechSynthesis.cancel();
+  if (typewriterTimer) { clearInterval(typewriterTimer); typewriterTimer = null; }
+  state = 'back';
+  currentCard = null;
+
+  cardFront.classList.remove('visible');
+  ruleSection.classList.remove('visible');
+  tapHint.classList.add('hidden');
+  ttsBtn.classList.remove('visible');
+  cardTitle.textContent = '';
+  cardStory.textContent = '';
+  ruleText.textContent = '';
+  cardBack.style.display = '';
+
+  cardWrap.style.transform = '';
+}
+
+// ── 拖曳翻牌 ──
+let dragStartY = 0;
+let dragCurY   = 0;
+let dragging   = false;
+const THRESHOLD = 90;
+
+function onDragStart(y) {
+  if (state !== 'back') return;
+  dragging = true;
+  dragStartY = y;
+  dragCurY   = y;
+  cardWrap.classList.add('dragging');
+}
+
+function onDragMove(y) {
+  if (!dragging) return;
+  dragCurY = y;
+  const dy = Math.max(0, y - dragStartY);
+  const capped = Math.min(dy, 130);
+  const progress = Math.min(dy / THRESHOLD, 1);
+  cardWrap.style.transform = `translateY(${capped * 0.6}px) scale(${1 - progress * 0.04})`;
+}
+
+function onDragEnd() {
+  if (!dragging) return;
+  dragging = false;
+  cardWrap.classList.remove('dragging');
+  const dy = dragCurY - dragStartY;
+  if (dy >= THRESHOLD) {
+    // 翻牌動畫
+    playDrawSound();
+    cardWrap.style.setProperty('--drag-end', `${Math.min(dy * 0.6, 80)}px`);
+    cardWrap.style.transform = '';
+    cardWrap.classList.add('flip-anim');
+    cardWrap.addEventListener('animationend', () => {
+      cardWrap.classList.remove('flip-anim');
+      revealCard();
+    }, { once: true });
+  } else {
+    // 彈回
+    cardWrap.style.transition = 'transform 0.3s cubic-bezier(0.34,1.56,0.64,1)';
+    cardWrap.style.transform = 'translateY(0) scale(1)';
+    setTimeout(() => { cardWrap.style.transition = ''; }, 320);
+  }
+}
+
+// 觸控
+cardWrap.addEventListener('touchstart', e => onDragStart(e.touches[0].clientY), { passive: true });
+cardWrap.addEventListener('touchmove',  e => { e.preventDefault(); onDragMove(e.touches[0].clientY); }, { passive: false });
+cardWrap.addEventListener('touchend',   () => onDragEnd());
+
+// 滑鼠
+cardWrap.addEventListener('mousedown', e => onDragStart(e.clientY));
+window.addEventListener('mousemove', e => { if (dragging) onDragMove(e.clientY); });
+window.addEventListener('mouseup',   () => { if (dragging) onDragEnd(); });
+
+// ── 點擊卡片正面查看規則 ──
+cardFront.addEventListener('click', () => {
+  if (state === 'story') showRule();
+});
+
+// ── 下一張按鈕 ──
+nextBtn.addEventListener('click', () => {
+  if (state === 'back') {
+    playDrawSound();
+    revealCard();
+  } else {
+    resetToBack();
+  }
+});
+
+// ── 重播語音 ──
+ttsBtn.addEventListener('click', e => { e.stopPropagation(); replayTTS(); });
+
+// ── 初始化 ──
+resetDeck();
+updateCounter();
+</script>
+</body>
+</html>
