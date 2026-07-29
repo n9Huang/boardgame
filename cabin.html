@@ -75,8 +75,8 @@
     /* ── 卡片舞台 ── */
     .stage {
       position: relative;
-      width: 300px;
-      height: 430px;
+      width: min(300px, 86vw);
+      height: min(560px, 62dvh);
       flex-shrink: 0;
     }
 
@@ -396,6 +396,13 @@
     }
     .test-btn:active { background: rgba(200,168,75,0.18); }
 
+    .clear-btn {
+      color: #ff8080;
+      border-color: rgba(255,107,107,0.4);
+      background: rgba(255,107,107,0.07);
+    }
+    .clear-btn:active { background: rgba(255,107,107,0.18); }
+
     /* ── 共用返回按鈕元件 ── */
     .back-btn {
       position: fixed;
@@ -462,6 +469,10 @@
     </div>
 
     <button class="test-btn" id="testBtn">試聽</button>
+
+    <div class="settings-divider"></div>
+
+    <button class="test-btn clear-btn" id="clearDeckBtn">清空記錄</button>
   </div>
 
   <div class="page-header">
@@ -589,6 +600,7 @@ let currentCard = null;
 let state = 'back';   // 'back' | 'story' | 'rule'
 let typewriterTimer = null;
 let ttsUtterance = null;
+let storyReady = false; // story 文字是否已打完，避免打字中被提早點擊打斷
 
 // ── 元素 ──
 const cardWrap   = document.getElementById('cardWrap');
@@ -782,6 +794,16 @@ testBtn.addEventListener('click', e => {
   speak('山中小屋，事件卡語音測試。');
 });
 
+const clearDeckBtn = document.getElementById('clearDeckBtn');
+clearDeckBtn.addEventListener('click', e => {
+  e.stopPropagation();
+  if (!confirm('確定要清空記錄，重新洗牌嗎？')) return;
+  localStorage.removeItem(DECK_STORAGE_KEY);
+  resetToBack();
+  resetDeck();
+  updateCounter();
+});
+
 // 載入語音清單
 function loadVoices() {
   const voices = window.speechSynthesis.getVoices();
@@ -884,21 +906,22 @@ function revealCard() {
   ruleText.textContent = '';
   ttsBtn.classList.add('visible');
 
-  // 先打 title + 說 title，然後打 story + 說 story
+  // 先打 title、再打 story；語音只負責播放，不再擋住文字顯示
+  // （iOS 第一次呼叫語音合成時，callback 有機率不觸發，若靠它接續打字會卡住）
+  storyReady = false;
   typewrite(cardTitle, currentCard.title, 80, () => {
-    speak(currentCard.title, () => {
-      typewrite(cardStory, currentCard.story, 35, () => {
-        speak(currentCard.story, () => {
-          tapHint.classList.remove('hidden');
-        });
-      });
+    speak(currentCard.title);
+    typewrite(cardStory, currentCard.story, 35, () => {
+      speak(currentCard.story);
+      storyReady = true;
+      tapHint.classList.remove('hidden');
     });
   });
 }
 
 // ── 顯示規則 ──
 function showRule() {
-  if (state !== 'story') return;
+  if (state !== 'story' || !storyReady) return;
   state = 'rule';
   tapHint.classList.add('hidden');
   ruleText.textContent = '';
@@ -912,6 +935,7 @@ function resetToBack() {
   if (typewriterTimer) { clearInterval(typewriterTimer); typewriterTimer = null; }
   state = 'back';
   currentCard = null;
+  storyReady = false;
 
   cardFront.classList.remove('visible');
   ruleSection.classList.remove('visible');

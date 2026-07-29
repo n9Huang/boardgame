@@ -1,4 +1,4 @@
-const VERSION = 'Z7.29.6';
+const VERSION = 'Z7.29.7';
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();
