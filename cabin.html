@@ -997,7 +997,11 @@ function onDragEnd() {
 
 // 觸控
 cardWrap.addEventListener('touchstart', e => onDragStart(e.touches[0].clientY), { passive: true });
-cardWrap.addEventListener('touchmove',  e => { e.preventDefault(); onDragMove(e.touches[0].clientY); }, { passive: false });
+cardWrap.addEventListener('touchmove', e => {
+  if (!dragging) return; // 只有在背面實際拖曳翻牌時才攔截，正面時讓頁面可以正常捲動
+  e.preventDefault();
+  onDragMove(e.touches[0].clientY);
+}, { passive: false });
 cardWrap.addEventListener('touchend',   () => onDragEnd());
 
 // 滑鼠
