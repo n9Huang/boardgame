@@ -108,24 +108,25 @@
       border-right: 1px solid rgba(255, 255, 255, 0.14);
     }
 
-    .head-row, .body-row, .total-row {
+    .head-row, .body-row {
       display: contents;
     }
 
-    .row-op {
-      width: 34px;
-      background: none;
-      border: none;
-      color: var(--muted);
-      font-size: 16px;
-      cursor: pointer;
-      padding: 8px 4px;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.14);
-      border-right: 1px solid rgba(255, 255, 255, 0.14);
+    .mult-cell {
+      flex-direction: column;
+      gap: 4px;
     }
 
-    .mult-cell {
-      width: 78px;
+    .round-del-btn {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      border: none;
+      background: rgba(255, 255, 255, 0.14);
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 20px;
+      cursor: pointer;
     }
 
     .mult-input {
@@ -141,7 +142,7 @@
     }
 
     .player-head {
-      width: 92px;
+      width: 108px;
       flex-direction: column;
       gap: 4px;
       position: relative;
@@ -246,10 +247,10 @@
       touch-action: manipulation;
     }
 
-    .total-row .cell-base {
+    .total-cell {
       font-weight: 700;
       font-size: 16px;
-      border-bottom: none;
+      width: 80px;
     }
 
     .bottom-bar {
@@ -376,73 +377,30 @@
     function renderGrid() {
       const grid = document.getElementById('grid');
       const playerCount = state.players.length;
-      grid.style.gridTemplateColumns = `34px 78px repeat(${playerCount}, 92px) 44px`;
+      const roundCount = state.rows.length;
+      grid.style.gridTemplateColumns = `108px repeat(${roundCount}, 92px) 44px 80px`;
       grid.innerHTML = '';
 
-      // ── 標題列 ──
+      // ── 標題列（每一欄代表一個回合／倍率）──
       const headRow = document.createElement('div');
       headRow.className = 'head-row';
 
-      const headCorner1 = document.createElement('div');
-      headCorner1.className = 'cell-base';
-      headRow.appendChild(headCorner1);
+      const headCorner = document.createElement('div');
+      headCorner.className = 'cell-base';
+      headCorner.textContent = '玩家 ＼ 倍率';
+      headRow.appendChild(headCorner);
 
-      const headCorner2 = document.createElement('div');
-      headCorner2.className = 'cell-base';
-      headCorner2.textContent = '倍率';
-      headRow.appendChild(headCorner2);
-
-      state.players.forEach((name, pIdx) => {
-        const head = document.createElement('div');
-        head.className = 'cell-base player-head';
-        if (playerCount > MIN_PLAYERS) head.classList.add('removable');
-
-        const input = document.createElement('input');
-        input.className = 'player-name';
-        input.value = name;
-        input.addEventListener('change', () => {
-          state.players[pIdx] = input.value.trim() || `P${pIdx + 1}`;
-          save();
-        });
-        head.appendChild(input);
-
-        const removeBtn = document.createElement('button');
-        removeBtn.className = 'player-remove';
-        removeBtn.textContent = '×';
-        removeBtn.title = '移除玩家';
-        removeBtn.addEventListener('click', () => removePlayer(pIdx));
-        head.appendChild(removeBtn);
-
-        headRow.appendChild(head);
-      });
-
-      const addPlayerCell = document.createElement('div');
-      addPlayerCell.className = 'cell-base add-col-cell';
-      if (playerCount < MAX_PLAYERS) {
-        const addBtn = document.createElement('button');
-        addBtn.className = 'add-btn';
-        addBtn.textContent = '+';
-        addBtn.title = '新增玩家';
-        addBtn.addEventListener('click', addPlayer);
-        addPlayerCell.appendChild(addBtn);
-      }
-      headRow.appendChild(addPlayerCell);
-      grid.appendChild(headRow);
-
-      // ── 每一列 ──
       state.rows.forEach((row, rIdx) => {
-        const bodyRow = document.createElement('div');
-        bodyRow.className = 'body-row';
+        const head = document.createElement('div');
+        head.className = 'cell-base mult-cell';
 
         const delBtn = document.createElement('button');
-        delBtn.className = 'row-op';
+        delBtn.className = 'round-del-btn';
         delBtn.textContent = '×';
-        delBtn.title = '刪除此列';
+        delBtn.title = '刪除此回合';
         delBtn.addEventListener('click', () => removeRow(rIdx));
-        bodyRow.appendChild(delBtn);
+        head.appendChild(delBtn);
 
-        const multCell = document.createElement('div');
-        multCell.className = 'cell-base mult-cell';
         const multInput = document.createElement('input');
         multInput.className = 'mult-input';
         multInput.type = 'number';
@@ -453,10 +411,56 @@
           save();
           renderGrid();
         });
-        multCell.appendChild(multInput);
-        bodyRow.appendChild(multCell);
+        head.appendChild(multInput);
 
-        state.players.forEach((_, pIdx) => {
+        headRow.appendChild(head);
+      });
+
+      const addRoundCell = document.createElement('div');
+      addRoundCell.className = 'cell-base add-col-cell';
+      const addRoundBtn = document.createElement('button');
+      addRoundBtn.className = 'add-btn';
+      addRoundBtn.textContent = '+';
+      addRoundBtn.title = '新增回合';
+      addRoundBtn.addEventListener('click', addRow);
+      addRoundCell.appendChild(addRoundBtn);
+      headRow.appendChild(addRoundCell);
+
+      const totalHead = document.createElement('div');
+      totalHead.className = 'cell-base';
+      totalHead.textContent = '總分';
+      headRow.appendChild(totalHead);
+
+      grid.appendChild(headRow);
+
+      // ── 每一列代表一位玩家 ──
+      state.players.forEach((name, pIdx) => {
+        const bodyRow = document.createElement('div');
+        bodyRow.className = 'body-row';
+
+        const nameCell = document.createElement('div');
+        nameCell.className = 'cell-base player-head';
+        if (playerCount > MIN_PLAYERS) nameCell.classList.add('removable');
+
+        const input = document.createElement('input');
+        input.className = 'player-name';
+        input.value = name;
+        input.addEventListener('change', () => {
+          state.players[pIdx] = input.value.trim() || `P${pIdx + 1}`;
+          save();
+        });
+        nameCell.appendChild(input);
+
+        const removeBtn = document.createElement('button');
+        removeBtn.className = 'player-remove';
+        removeBtn.textContent = '×';
+        removeBtn.title = '移除玩家';
+        removeBtn.addEventListener('click', () => removePlayer(pIdx));
+        nameCell.appendChild(removeBtn);
+
+        bodyRow.appendChild(nameCell);
+
+        state.rows.forEach((row) => {
           if (!row.cells[pIdx]) row.cells[pIdx] = { units: 0 };
           const cell = row.cells[pIdx];
 
@@ -504,38 +508,38 @@
         spacer.className = 'cell-base add-col-cell';
         bodyRow.appendChild(spacer);
 
+        const totalCell = document.createElement('div');
+        totalCell.className = 'cell-base total-cell';
+        totalCell.id = `total-${pIdx}`;
+        totalCell.textContent = computeTotal(pIdx);
+        bodyRow.appendChild(totalCell);
+
         grid.appendChild(bodyRow);
       });
 
-      renderTotalsRow(grid, playerCount);
-    }
+      // ── 新增玩家列 ──
+      if (playerCount < MAX_PLAYERS) {
+        const addPlayerRow = document.createElement('div');
+        addPlayerRow.className = 'body-row';
 
-    function renderTotalsRow(grid, playerCount) {
-      const totalRow = document.createElement('div');
-      totalRow.className = 'total-row';
+        const addPlayerCell = document.createElement('div');
+        addPlayerCell.className = 'cell-base';
+        const addBtn = document.createElement('button');
+        addBtn.className = 'add-btn';
+        addBtn.textContent = '+';
+        addBtn.title = '新增玩家';
+        addBtn.addEventListener('click', addPlayer);
+        addPlayerCell.appendChild(addBtn);
+        addPlayerRow.appendChild(addPlayerCell);
 
-      const c1 = document.createElement('div');
-      c1.className = 'cell-base';
-      totalRow.appendChild(c1);
+        for (let i = 0; i < roundCount + 2; i++) {
+          const c = document.createElement('div');
+          c.className = 'cell-base';
+          addPlayerRow.appendChild(c);
+        }
 
-      const c2 = document.createElement('div');
-      c2.className = 'cell-base';
-      c2.textContent = '總分';
-      totalRow.appendChild(c2);
-
-      for (let i = 0; i < playerCount; i++) {
-        const c = document.createElement('div');
-        c.className = 'cell-base total-cell';
-        c.id = `total-${i}`;
-        c.textContent = computeTotal(i);
-        totalRow.appendChild(c);
+        grid.appendChild(addPlayerRow);
       }
-
-      const c3 = document.createElement('div');
-      c3.className = 'cell-base';
-      totalRow.appendChild(c3);
-
-      grid.appendChild(totalRow);
     }
 
     function renderTotals() {
