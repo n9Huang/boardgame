@@ -392,7 +392,7 @@
   </div>
 
   <script>
-    const APP_VERSION = 'Z7.30.1';
+    const APP_VERSION = 'Z7.30.2';
     const SERVICE_WORKER_FILE = 'sw.js';
 
     // ── 隨機背景圖 ──
@@ -475,15 +475,20 @@
 
     registerServiceWorker();
 
-    // ── 讀取動畫：GIF 播放一段時間後淡出 ──
-    window.addEventListener('load', () => {
-      const loading = document.getElementById('loading-screen');
-      // 讓 GIF 至少跑 1.8 秒再淡出
-      setTimeout(() => {
-        loading.classList.add('fade-out');
-        loading.addEventListener('transitionend', () => loading.remove(), { once: true });
-      }, 1800);
-    });
+    // ── 讀取動畫：只在這個分頁第一次進站時播放，返回上一頁不再顯示 ──
+    const loading = document.getElementById('loading-screen');
+    if (sessionStorage.getItem('hasShownLoading')) {
+      loading.remove();
+    } else {
+      sessionStorage.setItem('hasShownLoading', '1');
+      window.addEventListener('load', () => {
+        // 讓 GIF 至少跑 1.8 秒再淡出
+        setTimeout(() => {
+          loading.classList.add('fade-out');
+          loading.addEventListener('transitionend', () => loading.remove(), { once: true });
+        }, 1800);
+      });
+    }
   </script>
 
 </body>
